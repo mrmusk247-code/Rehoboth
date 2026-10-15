@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10264d">
+<title>Rehoboth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: navy brand bar on top, one narrow column, bottom tab bar, cards for jobs. Palette: royal navy, bright gold, cool white. */
+:root{
+  --bg:#eef2fa; --card:#ffffff; --ink:#10264d; --mute:#566488; --line:#d5ddef;
+  --brand:#10264d; --brand-ink:#ffffff;
+  --accent:#f5b301; --accent-ink:#10264d; --ok:#1a8a55; --bad:#c23b32;
+  --display:"Sora",system-ui,sans-serif; --body:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1429; --card:#122041; --ink:#eaf0ff; --mute:#9fb0d6; --line:#243662;
+  --brand:#0d1b38; --brand-ink:#ffffff;
+  --accent:#ffc21a; --accent-ink:#10264d; --ok:#4cc486; --bad:#f08278; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1429; --card:#122041; --ink:#eaf0ff; --mute:#9fb0d6; --line:#243662;
+  --brand:#0d1b38; --brand-ink:#ffffff;
+  --accent:#ffc21a; --accent-ink:#10264d; --ok:#4cc486; --bad:#f08278; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-bottom:76px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:560px;margin:0 auto;padding-block:16px}
+h1,h2{font-family:var(--display);margin:0;letter-spacing:-.01em}
+h1{font-size:30px;font-weight:800}
+h2{font-size:21px;font-weight:600;margin-bottom:12px}
+.sub{color:var(--mute);margin:4px 0 20px}
+.brand{background:var(--brand);color:var(--brand-ink);border-radius:12px;padding:16px 18px;margin-bottom:20px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:4px solid var(--accent)}
+.brand b{font:800 26px var(--display);letter-spacing:-.01em}
+.brand span{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+label{display:block;font-size:13px;font-weight:600;color:var(--mute);margin:12px 0 4px}
+input,select,textarea,button{font:inherit;color:var(--ink)}
+input,select,textarea{width:100%;padding:11px 12px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{cursor:pointer}
+.btn{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{width:auto;margin:0;padding:9px 14px}
+.btn[disabled]{opacity:.6}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.seg button{flex:1;padding:10px;border:0;background:transparent;font-weight:600;color:var(--mute)}
+.seg button.on{background:var(--brand);color:var(--brand-ink)}
+.msg{margin-top:14px;padding:10px 12px;border-radius:8px;font-size:14px}
+.msg.err{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.msg.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.job{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.job h3{margin:0 0 4px;font:600 17px var(--display)}
+.meta{color:var(--mute);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.tag{border:1px solid var(--line);background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:99px;padding:1px 9px;font-size:12px}
+.price{font:800 20px var(--display);font-variant-numeric:tabular-nums;margin:8px 0}
+.offerbox{display:flex;gap:8px;margin-top:10px}
+.offerbox input{min-width:0}
+.empty{color:var(--mute);text-align:center;padding:32px 8px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.kv span:first-child{color:var(--mute)}
+.pill{padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.no{background:color-mix(in srgb,var(--accent) 30%,transparent);color:var(--ink)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding:0 max(16px,env(safe-area-inset-left,0px)) env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;background:none;padding:14px 4px;font-weight:600;color:var(--mute)}
+nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--accent)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand"><b>Rehoboth</b><span>Middle Man</span></header>
+  <section id="auth" hidden>
+    <h2>Welcome</h2>
+    <p class="sub">Find work. Hire help. Buy and sell near you.</p>
+    <div class="seg" role="tablist">
+      <button id="tabUp" class="on" type="button">Sign up</button>
+      <button id="tabIn" type="button">Log in</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div id="upFields">
+        <label for="name">Full name</label>
+        <input id="name" autocomplete="name">
+        <label for="role">I want to</label>
+        <select id="role">
+          <option value="worker">Find work</option>
+          <option value="hirer">Hire someone</option>
+          <option value="both">Both</option>
+        </select>
+        <label for="country">Country</label>
+        <select id="country"><option value="">Select your country</option></select>
+        <div class="row">
+          <div><label for="city">City</label><input id="city" placeholder="Accra" autocomplete="address-level2"></div>
+          <div><label for="area">Area</label><input id="area" placeholder="Osu"></div>
+        </div>
+      </div>
+      <div id="phoneBox">
+        <label for="phone">Phone number with country code</label>
+        <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+233 24 123 4567">
+      </div>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email">
+      <label for="pw">Password (6+ characters)</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button id="authBtn" class="btn" type="submit">Create account</button>
+    </form>
+    <div id="authMsg" role="status"></div>
+  </section>
+
+  <section id="app" hidden>
+    <div id="vJobs">
+      <h2>Jobs near you</h2>
+      <div class="row">
+        <div><label for="fCity">City</label><input id="fCity"></div>
+        <div><label for="fArea">Area</label><input id="fArea"></div>
+        <div><label for="fTerm">Type</label>
+          <select id="fTerm"><option value="">All</option><option value="short">Short-term</option><option value="long">Long-term</option></select></div>
+      </div>
+      <p class="sub" style="margin:10px 0 14px">Short-term jobs show for your area. Long-term jobs show citywide.</p>
+      <div id="jobList"></div>
+      <div id="jobMsg" role="status"></div>
+    </div>
+
+    <div id="vPost" hidden>
+      <h2>Post a job</h2>
+      <form id="postForm" novalidate>
+        <label for="pTitle">What do you need done?</label>
+        <input id="pTitle" placeholder="Paint two rooms">
+        <div class="row">
+          <div><label for="pCat">Category</label>
+            <select id="pCat"><option>Cleaning</option><option>Repairs</option><option>Moving</option><option>Cars</option><option>Construction</option><option>Delivery</option><option>Other</option></select></div>
+          <div><label for="pTerm">Type</label>
+            <select id="pTerm"><option value="short">Short-term</option><option value="long">Long-term</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="pCity">City</label><input id="pCity"></div>
+          <div><label for="pArea">Area (short-term)</label><input id="pArea"></div>
+        </div>
+        <label for="pBudget">Budget</label>
+        <input id="pBudget" type="number" min="0" inputmode="decimal">
+        <label for="pDesc">Details</label>
+        <textarea id="pDesc" rows="3"></textarea>
+        <button class="btn" type="submit">Publish job</button>
+      </form>
+      <div id="postMsg" role="status"></div>
+    </div>
+
+    <div id="vMe" hidden>
+      <h2>My profile</h2>
+      <div id="meBox"></div>
+      <button id="logout" class="btn ghost" type="button">Log out</button>
+    </div>
+  </section>
+</div>
+
+<nav id="nav" hidden>
+  <button data-v="vJobs" class="on" type="button">Jobs</button>
+  <button data-v="vPost" type="button">Post</button>
+  <button data-v="vMe" type="button">Profile</button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// Public project values. The publishable key is designed to be in the page; the database rules protect the data.
+var SUPABASE_URL = "https://fqxpbbuqmfrmdcctqoek.supabase.co";
+var SUPABASE_KEY = "sb_publishable_pNNTxuFPBUE_HzAwbNoL9A_rHeEvP3F";
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var $ = function (id) { return document.getElementById(id); };
+var mode = "up", me = null, profile = null, phone = "";
+var COUNTRIES = "Afghanistan|Albania|Algeria|Angola|Argentina|Armenia|Australia|Austria|Azerbaijan|Bahamas|Bahrain|Bangladesh|Belarus|Belgium|Belize|Benin|Bolivia|Bosnia and Herzegovina|Botswana|Brazil|Bulgaria|Burkina Faso|Burundi|Cambodia|Cameroon|Canada|Cape Verde|Central African Republic|Chad|Chile|China|Colombia|Comoros|Congo|Costa Rica|Cote d'Ivoire|Croatia|Cuba|Cyprus|Czechia|Democratic Republic of the Congo|Denmark|Djibouti|Dominican Republic|Ecuador|Egypt|El Salvador|Equatorial Guinea|Eritrea|Estonia|Eswatini|Ethiopia|Fiji|Finland|France|Gabon|Gambia|Georgia|Germany|Ghana|Greece|Guatemala|Guinea|Guinea-Bissau|Guyana|Haiti|Honduras|Hungary|Iceland|India|Indonesia|Iran|Iraq|Ireland|Israel|Italy|Jamaica|Japan|Jordan|Kazakhstan|Kenya|Kuwait|Kyrgyzstan|Laos|Latvia|Lebanon|Lesotho|Liberia|Libya|Lithuania|Luxembourg|Madagascar|Malawi|Malaysia|Mali|Malta|Mauritania|Mauritius|Mexico|Moldova|Mongolia|Morocco|Mozambique|Myanmar|Namibia|Nepal|Netherlands|New Zealand|Nicaragua|Niger|Nigeria|North Macedonia|Norway|Oman|Pakistan|Palestine|Panama|Papua New Guinea|Paraguay|Peru|Philippines|Poland|Portugal|Qatar|Romania|Russia|Rwanda|Saudi Arabia|Senegal|Serbia|Sierra Leone|Singapore|Slovakia|Slovenia|Somalia|South Africa|South Korea|South Sudan|Spain|Sri Lanka|Sudan|Suriname|Sweden|Switzerland|Syria|Taiwan|Tajikistan|Tanzania|Thailand|Togo|Trinidad and Tobago|Tunisia|Turkey|Turkmenistan|Uganda|Ukraine|United Arab Emirates|United Kingdom|United States|Uruguay|Uzbekistan|Venezuela|Vietnam|Yemen|Zambia|Zimbabwe".split("|");
+$("country").innerHTML += COUNTRIES.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function say(el, text, kind) {
+  el.innerHTML = text ? '<div class="msg ' + kind + '">' + esc(text) + "</div>" : "";
+}
+function nice(err) {
+  var m = (err && err.message) || "Something went wrong. Try again.";
+  if (/Invalid login/i.test(m)) return "Wrong email or password.";
+  if (/already registered/i.test(m)) return "That email already has an account. Log in instead.";
+  if (/Offer limit/i.test(m)) return "Offer limit reached. Verify your ID to send more offers.";
+  if (/Failed to fetch|NetworkError/i.test(m)) return "No connection. Check your data and try again.";
+  return m;
+}
+
+/* Auth screen */
+function setMode(m) {
+  mode = m;
+  $("tabUp").classList.toggle("on", m === "up");
+  $("tabIn").classList.toggle("on", m === "in");
+  $("upFields").hidden = m !== "up"; $("phoneBox").hidden = m !== "up";
+  $("authBtn").textContent = m === "up" ? "Create account" : "Log in";
+  $("pw").autocomplete = m === "up" ? "new-password" : "current-password";
+  say($("authMsg"), "");
+}
+$("tabUp").onclick = function () { setMode("up"); };
+$("tabIn").onclick = function () { setMode("in"); };
+
+$("authForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var email = $("email").value.trim(), pw = $("pw").value;
+  if (!email || pw.length < 6) return say($("authMsg"), "Enter your email and a password of 6 or more characters.", "err");
+  var btn = $("authBtn"); btn.disabled = true;
+  try {
+    if (mode === "up") {
+      var name = $("name").value.trim(), city = $("city").value.trim(), phone = $("phone").value.trim(), country = $("country").value;
+      if (!name || !city || !country) { btn.disabled = false; return say($("authMsg"), "Enter your name, country and city.", "err"); }
+      phone = phone.replace(/[\s().-]/g, "");
+      if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { btn.disabled = false; return say($("authMsg"), "Start your number with the country code, for example +233 24 123 4567 or +1 415 555 0123.", "err"); }
+      var r = await sb.auth.signUp({ email: email, password: pw, options: { data: {
+        name: name, role: $("role").value, city: city, area: $("area").value.trim(), phone: phone, country: country } } });
+      if (r.error) throw r.error;
+      if (!r.data.session) say($("authMsg"), "Account created. Open the email we sent you, tap the confirm link, then log in.", "ok");
+    } else {
+      var r2 = await sb.auth.signInWithPassword({ email: email, password: pw });
+      if (r2.error) throw r2.error;
+    }
+  } catch (err) { say($("authMsg"), nice(err), "err"); }
+  btn.disabled = false;
+});
+
+/* Session */
+sb.auth.onAuthStateChange(function (_e, session) { me = session ? session.user : null; route(); });
+(async function () {
+  var r = await sb.auth.getSession();
+  me = r.data.session ? r.data.session.user : null;
+  route();
+})();
+
+async function route() {
+  $("auth").hidden = !!me;
+  $("app").hidden = !me;
+  $("nav").hidden = !me;
+  if (!me) return;
+  var r = await sb.from("profiles").select("*").eq("id", me.id).maybeSingle();
+  profile = r.data;
+  var c = await sb.from("contacts").select("phone").eq("id", me.id).maybeSingle();
+  phone = c.data ? c.data.phone : "";
+  if (profile) {
+    if (!$("fCity").value) $("fCity").value = profile.city || "";
+    if (!$("fArea").value) $("fArea").value = profile.area || "";
+    if (!$("pCity").value) $("pCity").value = profile.city || "";
+    if (!$("pArea").value) $("pArea").value = profile.area || "";
+  }
+  loadJobs(); renderMe();
+}
+
+/* Tabs */
+document.querySelectorAll("#nav button").forEach(function (b) {
+  b.onclick = function () {
+    document.querySelectorAll("#nav button").forEach(function (x) { x.classList.toggle("on", x === b); });
+    ["vJobs", "vPost", "vMe"].forEach(function (v) { $(v).hidden = v !== b.dataset.v; });
+    if (b.dataset.v === "vJobs") loadJobs();
+    if (b.dataset.v === "vMe") renderMe();
+  };
+});
+
+/* Jobs */
+["fCity", "fArea", "fTerm"].forEach(function (id) { $(id).addEventListener("change", loadJobs); });
+
+async function loadJobs() {
+  var city = $("fCity").value.trim(), area = $("fArea").value.trim().toLowerCase(), term = $("fTerm").value;
+  var q = sb.from("jobs").select("*").eq("status", "open").eq("country", (profile && profile.country) || "").order("created_at", { ascending: false }).limit(60);
+  if (city) q = q.ilike("city", city);
+  if (term) q = q.eq("term", term);
+  var r = await q;
+  if (r.error) { $("jobList").innerHTML = ""; return say($("jobMsg"), nice(r.error), "err"); }
+  say($("jobMsg"), "");
+  var rows = (r.data || []).filter(function (j) {
+    return j.term === "long" || !area || (j.area || "").toLowerCase() === area;
+  });
+  if (!rows.length) {
+    $("jobList").innerHTML = '<div class="empty">No jobs here yet. Post the first one from the Post tab.</div>';
+    return;
+  }
+  $("jobList").innerHTML = rows.map(function (j) {
+    var mine = me && j.poster_id === me.id;
+    return '<article class="job"><h3>' + esc(j.title) + '</h3>' +
+      '<div class="meta"><span class="tag">' + esc(j.category) + '</span><span class="tag">' +
+      (j.term === "short" ? "Short-term" : "Long-term") + '</span><span>' + esc(j.city) +
+      (j.term === "short" && j.area ? " · " + esc(j.area) : "") + '</span></div>' +
+      (j.description ? '<p style="margin:8px 0 0">' + esc(j.description) + '</p>' : "") +
+      '<div class="price">' + Number(j.budget).toLocaleString() + '</div>' +
+      (mine ? '<div class="meta">Your job</div>' :
+        '<div class="offerbox"><input type="number" min="0" inputmode="decimal" placeholder="Your offer" aria-label="Your offer" id="o' + j.id + '">' +
+        '<button class="btn small" type="button" data-job="' + j.id + '">Send offer</button></div>') +
+      '</article>';
+  }).join("");
+  document.querySelectorAll("[data-job]").forEach(function (b) {
+    b.onclick = function () { sendOffer(Number(b.dataset.job), b); };
+  });
+}
+
+async function sendOffer(jobId, btn) {
+  var amount = Number($("o" + jobId).value);
+  if (!(amount > 0)) return say($("jobMsg"), "Enter your offer amount first.", "err");
+  btn.disabled = true;
+  var r = await sb.from("offers").insert({ job_id: jobId, amount: amount });
+  btn.disabled = false;
+  if (r.error) {
+    if (r.error.code === "23505") return say($("jobMsg"), "You already sent an offer on this job.", "err");
+    return say($("jobMsg"), nice(r.error), "err");
+  }
+  say($("jobMsg"), "Offer sent.", "ok");
+  $("o" + jobId).value = "";
+}
+
+/* Post */
+$("postForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var title = $("pTitle").value.trim(), city = $("pCity").value.trim(), budget = Number($("pBudget").value);
+  if (!title || !city || !(budget >= 0) || $("pBudget").value === "")
+    return say($("postMsg"), "Add a title, city and budget.", "err");
+  var r = await sb.from("jobs").insert({
+    title: title, category: $("pCat").value, term: $("pTerm").value, city: city, country: (profile && profile.country) || "",
+    area: $("pArea").value.trim() || null, budget: budget, description: $("pDesc").value.trim() || null });
+  if (r.error) return say($("postMsg"), nice(r.error), "err");
+  say($("postMsg"), "Job published.", "ok");
+  $("pTitle").value = ""; $("pBudget").value = ""; $("pDesc").value = "";
+});
+
+/* Profile */
+function renderMe() {
+  if (!me) return;
+  var p = profile || {};
+  var roles = { worker: "Looking for work", hirer: "Hiring", both: "Work and hiring" };
+  $("meBox").innerHTML =
+    '<div class="kv"><span>Name</span><span>' + esc(p.name || "") + '</span></div>' +
+    '<div class="kv"><span>Email</span><span>' + esc(me.email) + '</span></div>' +
+    '<div class="kv"><span>Phone</span><span>' + esc(phone || "Not added") + '</span></div>' +
+    '<div class="kv"><span>Role</span><span>' + esc(roles[p.role] || "") + '</span></div>' +
+    '<div class="kv"><span>Location</span><span>' + esc([p.area, p.city, p.country].filter(Boolean).join(", ")) + '</span></div>' +
+    '<div class="kv"><span>Rating</span><span>' + Number(p.rating || 0).toFixed(1) + ' · ' + (p.jobs_done || 0) + ' jobs done</span></div>' +
+    '<div class="kv"><span>ID verification</span><span class="pill ' + (p.verified ? "ok" : "no") + '">' +
+    (p.verified ? "Verified" : "Not verified · 2 offers max") + '</span></div>';
+}
+$("logout").onclick = async function () { await sb.auth.signOut(); };
+
+setMode("up");
+</script>
+</body>
+</html>
