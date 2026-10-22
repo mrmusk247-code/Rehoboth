@@ -1,0 +1,2236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061230">
+<title>Rehoboth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<style>.map{height:230px;border-radius:12px;margin:10px 0;border:1px solid var(--line)}.hire textarea{margin-top:10px}.hire summary{cursor:pointer;list-style:none}.hire summary::-webkit-details-marker{display:none}
+/* Layout: blue brand bar on top, one narrow column, floating glass tab bar, cards for jobs. Palette: all blue, one look in light and dark. */
+:root{
+  --bg:#061230; --card:#0d1f45; --ink:#eef4ff; --mute:#8fa8d8; --line:#1c3670;
+  --brand:#0a1c46; --brand-ink:#ffffff;
+  --accent:#2f6bff; --accent2:#22b4ff; --accent-ink:#ffffff; --ok:#35d08a; --bad:#ff7070;
+  --grad:linear-gradient(135deg,#2f6bff,#22b4ff);
+  --display:"Sora",system-ui,sans-serif; --body:"Figtree",system-ui,sans-serif;
+  color-scheme:dark;
+}
+/* Themes: System (default, follows the phone), Light, or Dark. Chosen in Settings. */
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef4ff; --card:#ffffff; --ink:#0a1c46; --mute:#4a5f8a; --line:#c9d6f0; --brand:#0a1c46;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#eef4ff; --card:#ffffff; --ink:#0a1c46; --mute:#4a5f8a; --line:#c9d6f0; --brand:#0a1c46;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-bottom:120px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:560px;margin:0 auto;padding-block:16px}
+h1,h2{font-family:var(--display);margin:0;letter-spacing:-.01em}
+h1{font-size:30px;font-weight:800}
+h2{font-size:21px;font-weight:600;margin-bottom:12px}
+.sub{color:var(--mute);margin:4px 0 20px}
+.brand{background:var(--brand);color:var(--brand-ink);border-radius:12px;padding:16px 18px;margin-bottom:20px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:4px solid var(--accent2)}
+.brand b{font:800 26px var(--display);letter-spacing:-.01em}
+.brand span{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2)}
+label{display:block;font-size:13px;font-weight:600;color:var(--mute);margin:12px 0 4px}
+input,select,textarea,button{font:inherit;color:var(--ink)}
+input,select,textarea{width:100%;padding:11px 12px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{cursor:pointer}
+.btn{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:var(--grad);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{width:auto;margin:0;padding:9px 14px;white-space:nowrap}
+.btn[disabled]{opacity:.6}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.seg button{flex:1;padding:10px;border:0;background:transparent;font-weight:600;color:var(--mute)}
+.seg button.on{background:var(--grad);color:var(--accent-ink)}
+.msg{margin-top:14px;padding:10px 12px;border-radius:8px;font-size:14px}
+.msg.err{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.msg.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.job{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.job h3{margin:0 0 4px;font:600 17px var(--display)}
+.meta{color:var(--mute);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.tag{border:1px solid var(--line);background:color-mix(in srgb,var(--accent) 20%,transparent);border-radius:99px;padding:1px 9px;font-size:12px}
+.price{font:800 20px var(--display);font-variant-numeric:tabular-nums;margin:8px 0}
+.offerbox{display:flex;gap:8px;margin-top:10px}
+.offerbox input{min-width:0}
+.row2{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.row2 .btn{flex:1;min-width:110px}
+.note{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.note p{margin:0 0 4px}
+.empty{color:var(--mute);text-align:center;padding:32px 8px}
+.stats{display:flex;justify-content:space-around;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.stats div{display:flex;flex-direction:column;align-items:center}.stats b{font-size:18px}.stats span{font-size:12px;color:var(--mute)}.likebtn{background:none;border:0;color:var(--mute);font-size:15px;padding:6px 0}.likebtn.on{color:#ff5d73}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.kv span:first-child{color:var(--mute)}
+.pill{padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.no{background:color-mix(in srgb,var(--accent) 28%,transparent);color:var(--ink)}
+nav{position:fixed;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),410px);
+  bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:5;
+  display:flex;padding:6px;border-radius:999px;
+  background:color-mix(in srgb,var(--card) 58%,transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);
+  border:1px solid color-mix(in srgb,#fff 16%,transparent);
+  box-shadow:0 12px 32px rgba(0,0,0,.45),inset 0 1px 0 color-mix(in srgb,#fff 22%,transparent)}
+nav .dot{position:absolute;top:6px;left:6px;width:calc((100% - 12px)/5);height:calc(100% - 12px);
+  display:flex;align-items:center;justify-content:center;pointer-events:none;
+  transition:transform .5s cubic-bezier(.3,1.35,.45,1),opacity .2s}
+nav .dot i{display:block;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.55),transparent 52%),var(--grad);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 6px 20px rgba(47,107,255,.65),inset 0 -3px 6px rgba(0,30,120,.35)}
+nav button{position:relative;flex:1;height:52px;border:0;background:none;border-radius:999px;color:var(--mute);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:color .25s}
+nav button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent-ink)}
+nav button:active svg{transform:scale(.88)}
+nav button svg{transition:transform .2s}
+.badge{position:absolute;top:9px;right:calc(50% - 17px);width:10px;height:10px;border-radius:50%;background:var(--bad);border:2px solid var(--card)}
+nav button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));
+  bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:5;width:58px;height:58px;border-radius:50%;border:0;
+  background:var(--grad);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(47,107,255,.6);transition:transform .2s}
+.fab:active{transform:scale(.92)}
+.fab svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+@media (prefers-reduced-motion:reduce){nav .dot,nav button,.fab{transition:none}}
+.post{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.post .who{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.post .who b{font:600 16px var(--display)}
+.post .media{width:100%;max-height:68vh;object-fit:contain;background:#000;border-radius:8px;display:block}
+.post p{margin:8px 0 0}
+.tick{width:1em;height:1em;vertical-align:-.14em;margin-left:5px}
+.fold{border:1px solid var(--line);border-radius:10px;margin-top:14px;background:var(--card)}
+.fold>summary{list-style:none;cursor:pointer;padding:14px;font:600 17px var(--display);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"+";color:var(--accent2);font-size:24px;line-height:1}
+.fold[open]>summary::after{content:"\2013"}
+.fold .inner{padding:0 14px 14px}
+.stars{display:flex;gap:2px;margin:6px 0}
+.stars button{background:none;border:0;font-size:30px;line-height:1;color:var(--line);padding:0 3px}
+.stars button.on{color:#ffc83d}
+.rate{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.livecard{border:1px dashed var(--line);border-radius:10px;padding:14px;margin-top:16px;color:var(--mute);font-size:14px}
+[hidden]{display:none!important}
+
+/* Watch, TikTok style: one full-screen post at a time, swipe up for the next */
+#vWatch.tt{margin:-8px -16px 0}
+#vWatch.tt #feedList{height:calc(100dvh - 150px);overflow-y:scroll;scroll-snap-type:y mandatory;background:#000;border-radius:0 0 14px 14px}
+#vWatch.tt .post{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;border:0;border-radius:0;margin:0;padding:0;background:#000;overflow:hidden}
+#vWatch.tt .post .media{width:100%;height:100%;max-height:none;object-fit:contain;border-radius:0}
+.post .side{position:absolute;right:10px;bottom:190px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.sbtn{background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0}
+.sbtn span{width:48px;height:48px;border-radius:50%;background:rgba(10,20,50,.6);display:flex;align-items:center;justify-content:center;font-size:24px}
+.sbtn i{font-style:normal;font-size:12px}
+.sbtn.on span{background:var(--grad)}
+.sbtn.like span{color:#ff5d73}
+.post .cap{position:absolute;left:0;right:70px;bottom:0;padding:60px 14px 96px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff}
+.post .cap p{margin:6px 0 0}
+.toptabs{position:absolute;top:8px;left:0;right:0;z-index:5;display:flex;justify-content:center;gap:22px}
+.toptabs button{background:none;border:0;color:rgba(255,255,255,.6);font:600 17px var(--display);padding:6px 4px;border-bottom:3px solid transparent}
+.toptabs button.on{color:#fff;border-bottom-color:#fff}
+#wFeed{position:relative}
+#welcome[hidden],#agree[hidden],#callBox[hidden],#incoming[hidden],#bMapBox[hidden]{display:none!important}
+html[dir="rtl"] body{direction:rtl}
+html[dir="rtl"] .bub.me{margin-left:auto;margin-right:0}
+#remoteV,#localV{width:100%;border-radius:12px;background:#000}
+#localV{max-width:120px;margin-top:6px}
+.wsearch{position:absolute;top:44px;left:12px;right:12px;z-index:6}
+.wsearch input{background:rgba(8,16,44,.82);border-radius:99px;padding:8px 14px;font-size:15px}
+.wsearchout{position:absolute;top:84px;left:12px;right:12px;bottom:12px;z-index:7;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-y:auto}
+.wsearchout .kv{padding:8px 0}
+.plus{position:fixed;z-index:6;right:max(16px,env(safe-area-inset-right,0px));bottom:110px;width:54px;height:54px;border-radius:50%;border:0;background:var(--grad);color:var(--accent-ink);font-size:32px;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.subnav{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:104px;display:flex;background:rgba(8,16,44,.88);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:99px;padding:4px}
+.subnav button{border:0;background:none;color:var(--mute);font-weight:600;padding:8px 24px;border-radius:99px}
+.subnav button.on{background:var(--grad);color:var(--accent-ink)}
+#wPost{margin-bottom:90px}
+.cover{height:110px;background:var(--grad) center/cover}
+.avatar{width:84px;height:84px;border-radius:50%;border:3px solid var(--bg);margin:-42px auto 6px;background:#1a3a7a center/cover;display:flex;align-items:center;justify-content:center;font:700 32px var(--display);color:#fff;position:relative}
+.wav{width:44px;height:44px;border-radius:50%;background:#1a3a7a center/cover;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.pbtns{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.pbtns label{display:inline-block;margin:0;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--ink)}
+.pbtns input{display:none}
+.lphoto{width:100%;max-height:260px;object-fit:cover;border-radius:8px;margin-top:8px}
+.thmsgs{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow-y:auto;padding:4px 0 8px}
+.bub{max-width:80%;padding:8px 12px;border-radius:14px;background:var(--card);border:1px solid var(--line);align-self:flex-start;word-wrap:break-word}
+.bub.me{align-self:flex-end;background:var(--grad);color:var(--accent-ink);border-color:transparent}
+.bub small{display:block;opacity:.65;font-size:11px;margin-top:2px}
+#thForm{display:flex;gap:8px;margin-bottom:90px}
+#thForm input{flex:1;min-width:0}
+.conv{cursor:pointer}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ptile{position:relative;aspect-ratio:3/4;border:0;padding:0;border-radius:6px;overflow:hidden;background:#000}
+.ptile img,.ptile video{width:100%;height:100%;object-fit:cover;display:block}
+.ptile .play{position:absolute;right:6px;bottom:4px;color:#fff;font-size:14px;text-shadow:0 1px 3px #000}
+.pmodal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px}
+.pcard{background:var(--card);border-radius:12px;padding:12px;max-width:440px;width:100%;max-height:92vh;overflow:auto}
+.pcard img,.pcard video{width:100%;max-height:60vh;object-fit:contain;border-radius:8px;background:#000;display:block}
+.pcard p{margin:8px 0}
+.vcount{position:absolute;left:6px;bottom:4px;color:#fff;font-size:12px;text-shadow:0 1px 3px #000}
+.pfeed{position:fixed;inset:0;z-index:60;background:#000}
+.pslides{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory}
+.pslide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;color:#fff}
+.pslide img,.pslide video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+.pinfo{position:absolute;left:0;right:0;bottom:0;padding:60px 14px 26px;background:linear-gradient(transparent,rgba(0,0,0,.8));max-height:55%;overflow-y:auto}
+.pinfo p{margin:0 0 6px}
+.vlist summary{cursor:pointer;color:#fff;margin:6px 0}
+.vrow{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.15)}
+.vrow span{opacity:.7}
+.pclose{position:absolute;top:12px;right:12px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:26px;line-height:1}
+.pinfo .btn{background:rgba(255,255,255,.15)}
+.favwrap{position:relative;width:52px;height:52px;margin-bottom:4px}
+.favatar{width:52px;height:52px;border-radius:50%;border:2px solid #fff;background:#1a3a7a center/cover;color:#fff;font:700 20px var(--display);display:flex;align-items:center;justify-content:center;padding:0}
+.fplus{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;color:#fff;font-weight:800;font-size:16px;line-height:20px;text-align:center;border:2px solid #000}
+.sbtn.like span{color:#3b82ff}
+.sbtn.like.on span{color:#3b82ff}
+.lc{font-size:14px;margin-top:4px}
+.linkbtn{background:none;border:0;color:#cfe0ff;text-decoration:underline;padding:4px 0;font-size:14px}
+.csheet{position:fixed;inset:0;z-index:70}
+.cback{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.cpanel{position:absolute;left:0;right:0;bottom:0;max-height:72vh;background:var(--card);border-radius:16px 16px 0 0;padding:14px;display:flex;flex-direction:column;gap:8px}
+.chead{display:flex;justify-content:space-between;align-items:center}
+.clist{overflow-y:auto;flex:1;min-height:120px}
+.crow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.cform{display:flex;gap:8px}
+.cform input{flex:1;min-width:0}
+.pickbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:200px;border:2px dashed var(--line);border-radius:14px;cursor:pointer;color:var(--ink);text-align:center;padding:16px;margin-bottom:12px}
+.pickbox small{color:var(--mute)}
+.prev{margin-bottom:10px}
+.prev img,.prev video{width:100%;max-height:52vh;object-fit:contain;border-radius:12px;background:#000;display:block}
+.sndline{font-size:14px;color:#cfe0ff;margin-top:4px}
+#wForm .row2{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand"><b>Rehoboth</b><span>Middle Man</span></header>
+  <section id="auth" hidden>
+    <h2>Welcome</h2>
+    <p class="sub">Find work. Hire help. Buy and sell near you.</p>
+    <div class="seg" role="tablist">
+      <button id="tabUp" class="on" type="button">Sign up</button>
+      <button id="tabIn" type="button">Log in</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div id="upFields">
+        <label for="name">Full name</label>
+        <input id="name" autocomplete="name">
+        <label for="role">I want to</label>
+        <select id="role">
+          <option value="worker">Find work</option>
+          <option value="hirer">Hire someone</option>
+          <option value="both">Both</option>
+        </select>
+        <label for="job">What do you do for a living?</label>
+        <input id="job" list="cats" autocomplete="off" placeholder="Electrician, driver, tailor, nurse, teacher">
+        <label for="country">Country</label>
+        <select id="country"><option value="">Select your country</option></select>
+        <div class="row">
+          <div><label for="city">City</label><input id="city" placeholder="Accra" autocomplete="address-level2"></div>
+          <div><label for="area">Area</label><input id="area" placeholder="Osu"></div>
+        </div>
+      </div>
+      <div id="phoneBox">
+        <label for="phone">Phone number with country code</label>
+        <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+233 24 123 4567">
+      </div>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email">
+      <label for="pw">Password (6+ characters)</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button id="authBtn" class="btn" type="submit">Create account</button>
+    </form>
+    <div id="authMsg" role="status"></div>
+  </section>
+
+  <section id="app" hidden>
+    <div id="incoming" hidden role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px;display:flex">
+      <div class="card" style="max-width:380px;width:100%;text-align:center"><h2 id="incName" style="margin:0 0 6px"></h2><p class="meta" id="incKind" style="margin:0 0 14px"></p>
+        <div class="row2"><button id="incAccept" class="btn" type="button" data-i18n="accept">Accept</button><button id="incDecline" class="btn ghost" type="button" data-i18n="decline">Decline</button></div></div>
+    </div>
+    <div id="callBox" hidden role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:65;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px;display:flex">
+      <div class="card" style="max-width:420px;width:100%;text-align:center"><h2 id="callName" style="margin:0 0 4px"></h2><p class="meta" id="callStatus" role="status" style="margin:0 0 10px"></p>
+        <video id="remoteV" autoplay playsinline hidden></video><video id="localV" autoplay playsinline muted hidden></video>
+        <audio id="remoteA" autoplay></audio>
+        <div class="row2" style="margin-top:12px"><button id="callMute" class="btn ghost" type="button" data-i18n="mute">Mute</button><button id="callEnd" class="btn" type="button" data-i18n="hangup">Hang up</button></div></div>
+    </div>
+    <div id="welcome" hidden role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px;display:flex">
+      <div class="card" style="max-width:420px;width:100%"><div id="welcomeBody"></div></div>
+    </div>
+    <div id="agree" hidden role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px;display:flex">
+      <div class="card" style="max-width:420px;width:100%;max-height:90vh;overflow-y:auto"><h2 style="margin:0 0 8px">Before you agree</h2><div id="agreeBody"></div></div>
+    </div>
+    <div id="vJobs">
+      <div class="seg"><button id="hWork" class="on" type="button">Workers</button><button id="hBuy" type="button">Buy &amp; sell</button></div>
+      <div id="hPaneWork">
+        <div class="seg"><button id="mNeed" class="on" type="button">Hire or buy</button><button id="mFind" type="button">Work or sell</button></div>
+        <div id="liveCard" class="note" hidden>
+          <p><b>Get offers</b></p>
+          <p class="meta">Tap Go live and people who need your kind of work near you can find you now. If you are not live, they can still find you by your set location, so you get offers even when you are offline.</p>
+          <p class="meta" id="goState" style="margin-top:6px"></p>
+          <button id="goLive" class="btn small" type="button" style="margin-top:8px">Go live</button>
+        </div>
+        <div id="needBox">
+          <label for="fQ">What work or worker do you need?</label>
+          <input id="fQ" type="search" list="cats" placeholder="Plumber, driver, tailor, cleaner" autocomplete="off">
+          <datalist id="cats"></datalist>
+          <div class="row">
+            <div><label for="fCity">City</label><input id="fCity"></div>
+            <div><label for="fArea">Area</label><input id="fArea"></div>
+            <div><label for="fTerm">Type</label>
+              <select id="fTerm"><option value="short">Short-term</option><option value="long">Long-term</option></select></div>
+          </div>
+          <button id="findBtn" class="btn" type="button" style="margin-top:12px">Find a worker</button>
+          <p class="sub" id="searchState" style="margin:8px 0 12px">Short-term shows workers in your area. Long-term shows workers across the city and region. Live workers come first.</p>
+          <button id="mapBtn" class="btn small ghost" type="button" style="margin-bottom:10px">Show map</button>
+          <div id="homeMap" class="map" hidden></div>
+        </div>
+        <p id="onlineNow" class="meta" style="margin:0 0 8px"></p>
+        <div id="bestBox" hidden style="margin:0 0 12px"></div>
+        <div id="jobList"></div>
+        <div id="jobMsg" role="status"></div>
+      </div>
+      <div id="hPaneBuy" hidden>
+        <div class="seg"><button id="bBrowse" class="on" type="button">Browse</button><button id="bSell" type="button">Sell</button><button id="bWant" type="button">I want to buy</button></div>
+        <div id="bList">
+          <input id="bQ" type="search" placeholder="Type what you want to buy" aria-label="Search">
+          <div class="row" style="margin-top:4px">
+            <div><label for="bLoc">Where</label><select id="bLoc"><option value="around">Around me</option><option value="city">My city</option><option value="region">Other place</option></select></div>
+            <div id="bPlaceBox" hidden><label for="bPlace">City or region</label><input id="bPlace" placeholder="Kumasi, Ashanti" autocomplete="off"></div>
+          </div>
+          <p class="meta" style="margin:6px 0 0">Around me uses your saved city. A map search is coming soon.</p>
+          <div id="bItems" style="margin-top:12px"></div>
+        </div>
+        <form id="bForm" novalidate hidden>
+          <h3 id="bFormT" style="margin:0 0 4px"></h3>
+          <div id="bKindBox"><label for="bKind">How do you want to sell?</label><select id="bKind"><option value="post">Just post it</option><option value="ad">Run an ad</option></select><p class="meta" style="margin:4px 0 8px">Just post: your item appears in the list. Run an ad: it appears first, marked Ad.</p><div id="bRuleBox"></div></div>
+          <label for="bTitle" id="bTitleL">What are you selling?</label><input id="bTitle" maxlength="80">
+          <div class="row">
+            <div><label for="bPrice" id="bPriceL">Price</label><input id="bPrice" type="number" min="0" inputmode="decimal"></div>
+            <div><label for="bCity">City</label><input id="bCity"></div>
+          </div>
+          <div style="margin-top:8px"><button id="bMapBtn" class="btn small ghost" type="button">Pick the place on the map</button> <span id="bPlace" class="meta"></span></div>
+          <div id="bMapBox" hidden style="height:220px;margin-top:8px;border-radius:12px;overflow:hidden"></div>
+          <label class="meta" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="bTrans"> <span id="bTransT">I can deliver it</span></label>
+          <label for="bDesc">Details</label><textarea id="bDesc" rows="3" maxlength="400"></textarea>
+          <div id="bPhotoBox"><label for="bFile">Photo (optional)</label><input id="bFile" type="file" accept="image/*"></div>
+          <button id="bSend" class="btn" type="submit" style="margin-top:12px">Post</button>
+        </form>
+        <div id="bMsg" role="status"></div>
+      </div>
+    </div>
+
+    <div id="vWatch" hidden>
+      <div class="subnav"><button id="wTabFeed" class="on" type="button">Watch</button><button id="wTabPost" type="button">Post</button></div>
+      <div id="wFeed">
+        <div id="feedMsg" role="status" style="padding:0 12px;position:absolute;top:88px;left:0;right:0;z-index:5;pointer-events:none"></div>
+        <div class="toptabs"><button id="wFol" type="button">Following</button><button id="wAll" class="on" type="button">For you</button></div>
+        <div class="wsearch"><input id="wSearch" type="search" placeholder="Search people and posts" aria-label="Search people and posts" autocomplete="off"></div>
+        <div id="wSearchOut" class="wsearchout" hidden></div>
+        <div id="feedList"></div>
+      </div>
+      <div id="wPost" hidden>
+        <div id="wLock" class="note" hidden>
+          <p><b>Posting is for subscribers</b></p>
+          <p class="meta">Free accounts can post during their first month. After that, subscribe to keep posting unlimited photos and short videos of your work and to grow your followers. Everyone can watch and follow for free.</p>
+          <button id="wSub" class="btn" type="button">Subscribe</button>
+        </div>
+        <form id="wForm" novalidate hidden>
+          <div id="wStep1">
+            <label class="pickbox" for="wFile">
+              <span id="pickT">+ Select a photo or video</span>
+              <small>Video up to 60 seconds, file up to 25 MB</small>
+            </label>
+            <input id="wFile" type="file" accept="image/*,video/*" hidden>
+            <div id="wPrev" class="prev" hidden></div>
+            <div class="row2">
+              <button id="wSoundBtn" class="btn small ghost" type="button" disabled>&#9835; Add sound</button>
+              <button id="wNext" class="btn small" type="button" disabled>Next</button>
+            </div>
+            <input id="wSound" type="file" accept="audio/*" hidden>
+            <p class="meta" id="wSoundLine" style="margin:8px 0 0"></p>
+          </div>
+          <div id="wStep2" hidden>
+            <div class="row2" style="margin:0 0 10px"><button id="wBack" class="btn small ghost" type="button">&larr; Back</button></div>
+            <div id="wPrev2" class="prev"></div>
+            <p class="meta" id="wSoundLine2" style="margin:6px 0 10px"></p>
+            <label for="wCap">Describe your work</label>
+            <textarea id="wCap" rows="3" maxlength="300" placeholder="The kitchen I just finished tiling"></textarea>
+            <p class="note" style="font-size:14px;margin-top:10px">Posting your real work improves your work and builds trust.</p>
+            <button id="wBtn" class="btn" type="submit">Post</button>
+          </div>
+        </form>
+        <div class="livecard"><b>Go live</b><br>Live video is coming soon. It needs a live-streaming service, which we will connect later.</div>
+        <div id="wMsg" role="status"></div>
+      </div>
+    </div>
+
+    <div id="vMine" hidden>
+      <h2>My jobs</h2>
+      <p class="sub" style="margin-bottom:12px">People you asked to work for you.</p>
+      <div id="mineList"></div>
+      <div id="mineMsg" role="status"></div>
+    </div>
+
+    <div id="vNotes" hidden>
+      <h2>Alerts</h2>
+      <div class="seg"><button id="nReq" class="on" type="button">Requests</button><button id="nMsg" type="button">Messages</button></div>
+      <div id="paneReq">
+        <p class="sub" style="margin-bottom:12px">People who want to hire you.</p>
+        <div id="noteList"></div>
+        <div id="noteMsg" role="status"></div>
+      </div>
+      <div id="paneMsg" hidden>
+        <div id="convList"></div>
+        <div id="thread" hidden>
+          <button id="thBack" class="btn small ghost" type="button">&larr; Messages</button>
+          <h3 id="thName" style="margin:12px 0 8px"></h3>
+          <div class="row2" style="margin:0 0 8px"><button id="thRep" class="btn small ghost" type="button">Report</button><button id="thBlk" class="btn small ghost" type="button">Block</button><button id="thCall" class="btn small" type="button" data-i18n="call">Call</button><button id="thVid" class="btn small ghost" type="button" data-i18n="video">Video</button></div>
+          <div id="thMsgs" class="thmsgs"></div>
+          <form id="thForm"><input id="thInput" maxlength="1000" placeholder="Write a message" autocomplete="off"><button id="thMic" class="btn small ghost" type="button" aria-label="Record a voice note">Mic</button><button class="btn small" type="submit">Send</button></form>
+          <p id="thRec" class="meta" hidden style="margin:6px 0 0">Recording... tap Mic again to send. Up to 60 seconds.</p>
+        </div>
+        <div id="chatMsg" role="status"></div>
+      </div>
+    </div>
+
+    <div id="vMe" hidden>
+      <h2>My profile</h2>
+      <div id="meBox"></div>
+      <div id="editBox"></div>
+      <div id="setBox"></div>
+      <div id="planBox"></div>
+      <div id="tickBox"></div>
+      <div id="ownerBox"></div>
+      <div id="adminBox"></div>
+      <button id="logout" class="btn ghost" type="button">Log out</button>
+    </div>
+  </section>
+</div>
+
+<nav id="nav" hidden aria-label="Main">
+  <div class="dot" id="dot"><i></i></div>
+  <button data-v="vJobs" data-i="0" class="on" type="button" aria-label="Home">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></svg><span data-i18n="nav.home">Home</span></button>
+  <button data-v="vWatch" data-i="1" type="button" aria-label="Watch">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/></svg><span data-i18n="nav.watch">Watch</span></button>
+  <button data-v="vMine" data-i="2" type="button" aria-label="My jobs">
+    <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg><span data-i18n="nav.jobs">My jobs</span></button>
+  <button data-v="vNotes" data-i="3" type="button" aria-label="Alerts">
+    <svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg><i class="badge" id="badge" hidden></i><span data-i18n="nav.alerts">Alerts</span></button>
+  <button data-v="vMe" data-i="4" type="button" aria-label="Profile">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span data-i18n="nav.profile">Profile</span></button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// Public project values. The publishable key is designed to be in the page; the database rules protect the data.
+var SUPABASE_URL = "https://fqxpbbuqmfrmdcctqoek.supabase.co";
+var SUPABASE_KEY = "sb_publishable_pNNTxuFPBUE_HzAwbNoL9A_rHeEvP3F";
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var $ = function (id) { return document.getElementById(id); };
+var mode = "up", me = null, profile = null, phone = "", shownFor = null;
+var COUNTRIES = "Afghanistan|Albania|Algeria|Angola|Argentina|Armenia|Australia|Austria|Azerbaijan|Bahamas|Bahrain|Bangladesh|Belarus|Belgium|Belize|Benin|Bolivia|Bosnia and Herzegovina|Botswana|Brazil|Bulgaria|Burkina Faso|Burundi|Cambodia|Cameroon|Canada|Cape Verde|Central African Republic|Chad|Chile|China|Colombia|Comoros|Congo|Costa Rica|Cote d'Ivoire|Croatia|Cuba|Cyprus|Czechia|Democratic Republic of the Congo|Denmark|Djibouti|Dominican Republic|Ecuador|Egypt|El Salvador|Equatorial Guinea|Eritrea|Estonia|Eswatini|Ethiopia|Fiji|Finland|France|Gabon|Gambia|Georgia|Germany|Ghana|Greece|Guatemala|Guinea|Guinea-Bissau|Guyana|Haiti|Honduras|Hungary|Iceland|India|Indonesia|Iran|Iraq|Ireland|Israel|Italy|Jamaica|Japan|Jordan|Kazakhstan|Kenya|Kuwait|Kyrgyzstan|Laos|Latvia|Lebanon|Lesotho|Liberia|Libya|Lithuania|Luxembourg|Madagascar|Malawi|Malaysia|Mali|Malta|Mauritania|Mauritius|Mexico|Moldova|Mongolia|Morocco|Mozambique|Myanmar|Namibia|Nepal|Netherlands|New Zealand|Nicaragua|Niger|Nigeria|North Macedonia|Norway|Oman|Pakistan|Palestine|Panama|Papua New Guinea|Paraguay|Peru|Philippines|Poland|Portugal|Qatar|Romania|Russia|Rwanda|Saudi Arabia|Senegal|Serbia|Sierra Leone|Singapore|Slovakia|Slovenia|Somalia|South Africa|South Korea|South Sudan|Spain|Sri Lanka|Sudan|Suriname|Sweden|Switzerland|Syria|Taiwan|Tajikistan|Tanzania|Thailand|Togo|Trinidad and Tobago|Tunisia|Turkey|Turkmenistan|Uganda|Ukraine|United Arab Emirates|United Kingdom|United States|Uruguay|Uzbekistan|Venezuela|Vietnam|Yemen|Zambia|Zimbabwe".split("|");
+$("country").innerHTML += COUNTRIES.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+/* The tick badge: colour follows the subscription level (blue, gold, green) */
+var TICKS = { green: "#2ecc71", black: "#0a0a0f", gold: "#ffc83d", muted: "#4d6499" };
+/* Collapsible sections: the box stays closed until the person taps its title */
+var foldOpen = {};
+function fold(key, title, inner) {
+  return '<details class="fold" data-fold="' + key + '"' + (foldOpen[key] ? " open" : "") + '><summary><span>' + title + '</span></summary><div class="inner">' + inner + '</div></details>';
+}
+function wireFolds(box) {
+  box.querySelectorAll("details[data-fold]").forEach(function (d) { d.addEventListener("toggle", function () { foldOpen[d.dataset.fold] = d.open; }); });
+}
+/* Subscription levels. Set each monthly price in PRICES, for example "GH₵ 50". null shows "Price coming soon". */
+var PLANS = [
+  { key: "great_hero", name: "Great Hero", tick: "green", perks: ["Unlimited offers", "See who needs you", "Post photos and videos in Watch", "No ads"] },
+  { key: "extreme_super", name: "Extreme Super", tick: "black", perks: ["Everything in Great Hero", "Higher place in lists", "Priority offers"] },
+  { key: "almighty_star", name: "Almighty Star", tick: "gold", perks: ["Everything in Extreme Super", "First place in lists", "Boosted, featured offers"] }
+];
+var PRICES = { great_hero: "$5", extreme_super: "$10", almighty_star: "$20" };
+function planOf(p) { return PLANS.filter(function (x) { return p && x.key === p.plan; })[0] || null; }
+function activeSub(p) { return !!(p && p.subscribed_until && new Date(p.subscribed_until) > new Date()); }
+/* The tick shows when the ID is approved and a level is paid; its colour follows the level. The owner's tick is set by hand. */
+function tickOf(p) {
+  if (!p) return null;
+  if (p.tick_free) return p.tick;
+  var pl = planOf(p);
+  return p.verified && pl && activeSub(p) ? pl.tick : null;
+}
+function tickHtml(t) {
+  return TICKS[t] ? '<svg class="tick" viewBox="0 0 24 24" role="img" aria-label="Verified"><circle cx="12" cy="12" r="10.4" fill="' + TICKS[t] +
+    '" stroke="#fff" stroke-opacity="' + (t === "black" ? "0.9" : "0") + '" stroke-width="1.6"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : "";
+}
+function say(el, text, kind) {
+  el.innerHTML = text ? '<div class="msg ' + kind + '">' + esc(text) + "</div>" : "";
+}
+function nice(err) {
+  var m = (err && err.message) || "Something went wrong. Try again.";
+  if (/Invalid login/i.test(m)) return "Wrong email or password.";
+  if (/already registered/i.test(m)) return "That email already has an account. Log in instead.";
+  if (/Offer limit/i.test(m)) return "Offer limit reached. Verify your ID to send more offers.";
+  if (/row-level security/i.test(m)) return "Posting is only for active subscribers.";
+  if (/Failed to fetch|NetworkError/i.test(m)) return "No connection. Check your data and try again.";
+  return m;
+}
+
+/* Auth screen */
+function setMode(m) {
+  mode = m;
+  $("tabUp").classList.toggle("on", m === "up");
+  $("tabIn").classList.toggle("on", m === "in");
+  $("upFields").hidden = m !== "up"; $("phoneBox").hidden = m !== "up";
+  $("authBtn").textContent = m === "up" ? "Create account" : "Log in";
+  $("pw").autocomplete = m === "up" ? "new-password" : "current-password";
+  say($("authMsg"), "");
+}
+$("tabUp").onclick = function () { setMode("up"); };
+$("tabIn").onclick = function () { setMode("in"); };
+
+$("authForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var email = $("email").value.trim(), pw = $("pw").value;
+  if (!email || pw.length < 6) return say($("authMsg"), "Enter your email and a password of 6 or more characters.", "err");
+  var btn = $("authBtn"); btn.disabled = true;
+  try {
+    if (mode === "up") {
+      var name = $("name").value.trim(), city = $("city").value.trim(), phone = $("phone").value.trim(), country = $("country").value, job = $("job").value.trim();
+      if (!name || !city || !country) { btn.disabled = false; return say($("authMsg"), "Enter your name, country and city.", "err"); }
+      if ($("role").value !== "hirer" && !job) { btn.disabled = false; return say($("authMsg"), "Write what you do for a living, so people who need you can find you.", "err"); }
+      phone = phone.replace(/[\s().-]/g, "");
+      if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { btn.disabled = false; return say($("authMsg"), "Start your number with the country code, for example +233 24 123 4567 or +1 415 555 0123.", "err"); }
+      var r = await sb.auth.signUp({ email: email, password: pw, options: { data: {
+        name: name, role: $("role").value, city: city, area: $("area").value.trim(), phone: phone, country: country, occupation: job } } });
+      if (r.error) throw r.error;
+      if (!r.data.session) say($("authMsg"), "Account created. Open the email we sent you, tap the confirm link, then log in.", "ok");
+    } else {
+      var r2 = await sb.auth.signInWithPassword({ email: email, password: pw });
+      if (r2.error) throw r2.error;
+    }
+  } catch (err) { say($("authMsg"), nice(err), "err"); }
+  btn.disabled = false;
+});
+
+/* Session */
+sb.auth.onAuthStateChange(function (_e, session) { me = session ? session.user : null; route(); });
+(async function () {
+  var r = await sb.auth.getSession();
+  me = r.data.session ? r.data.session.user : null;
+  route();
+})();
+
+async function route() {
+  $("auth").hidden = !!me;
+  $("app").hidden = !me;
+  $("nav").hidden = !me;
+  if (!me) { shownFor = null; return; }
+  var r = await sb.from("profiles").select("*").eq("id", me.id).maybeSingle();
+  profile = r.data;
+  var c = await sb.from("contacts").select("phone").eq("id", me.id).maybeSingle();
+  phone = c.data ? c.data.phone : "";
+  if (profile) {
+    if (!$("fCity").value) $("fCity").value = profile.city || "";
+    if (!$("fArea").value) $("fArea").value = profile.area || "";
+  }
+  logVisit();
+  startInbox();
+  applyLang();
+  showWelcome();
+  if (homeMode === null) setHome(profile && profile.role === "worker" ? "find" : "need");
+  loadBlocks(); loadNotes(); paintGo(); findMe(); loadGrowth();
+  if (shownFor !== me.id) { shownFor = me.id; show("vJobs", 0); } else { homeRefresh(); renderMe(); }
+}
+
+/* Tabs: the gold circle slides under the active icon */
+var VIEWS = ["vJobs", "vMine", "vNotes", "vMe", "vWatch"], prevIdx = null;
+function show(view, idx) {
+  VIEWS.forEach(function (v) { $(v).hidden = v !== view; });
+  var btns = document.querySelectorAll("#nav button");
+  btns.forEach(function (b) { b.classList.toggle("on", idx != null && Number(b.dataset.i) === idx); });
+  var dot = $("dot");
+  dot.style.opacity = idx == null ? 0 : 1;
+  if (idx != null) {
+    dot.style.transform = "translateX(" + (idx * 100) + "%)";
+    var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prevIdx != null && prevIdx !== idx && !calm && dot.firstElementChild.animate) {
+      var far = Math.abs(idx - prevIdx);
+      dot.firstElementChild.animate(
+        [{ transform: "scale(1,1)" }, { transform: "scale(" + (1.5 + 0.35 * far) + ",.88)", offset: 0.4 }, { transform: "scale(1.06,.97)", offset: 0.75 }, { transform: "scale(1,1)" }],
+        { duration: 560, easing: "ease-in-out" });
+    }
+    prevIdx = idx;
+  }
+  window.scrollTo(0, 0);
+  if (view !== "vJobs") stopSearch();
+  if (view !== "vNotes") stopChat();
+  if (view === "vJobs") homeRefresh();
+  if (view === "vMe") renderMe();
+  if (view === "vWatch") setW(wMode);
+  if (view === "vMine") loadMine();
+  if (view === "vNotes") loadNotes();
+}
+document.querySelectorAll("#nav button").forEach(function (b) {
+  b.onclick = function () {
+    show(b.dataset.v, Number(b.dataset.i));
+  };
+});
+
+/* Pictures: shrink before upload so they stay small and fast */
+function imgUrl(bucket, path) { return path ? sb.storage.from(bucket).getPublicUrl(path).data.publicUrl : ""; }
+function shrink(file, max) {
+  return new Promise(function (res) {
+    var img = new Image(), u = URL.createObjectURL(file);
+    img.onload = function () {
+      var k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      c.toBlob(function (b) { res(b || file); }, "image/jpeg", 0.82);
+    };
+    img.onerror = function () { URL.revokeObjectURL(u); res(file); };
+    img.src = u;
+  });
+}
+/* Home panes: Workers (I need a worker / I am looking for work) and Buy & sell */
+var homeMode = null, homePane = "work", searching = false, searchTimer = null;
+function setHome(m) {
+  homeMode = m;
+  $("mNeed").classList.toggle("on", m === "need"); $("mFind").classList.toggle("on", m === "find");
+  $("needBox").hidden = m !== "need"; $("jobList").hidden = m !== "need"; $("liveCard").hidden = m !== "find";
+  if (m !== "need") stopSearch();
+  paintGo();
+  if (m === "need") loadWorkers();
+}
+function setPane(p) {
+  homePane = p;
+  $("hWork").classList.toggle("on", p === "work"); $("hBuy").classList.toggle("on", p === "buy");
+  $("hPaneWork").hidden = p !== "work"; $("hPaneBuy").hidden = p !== "buy";
+  if (p !== "work") stopSearch();
+  homeRefresh();
+}
+function homeRefresh() { if (homePane === "buy") loadBuy(); else if (homeMode === "need") loadWorkers(); }
+function stopSearch() {
+  searching = false; clearInterval(searchTimer); searchTimer = null;
+  if ($("findBtn")) { $("findBtn").textContent = "Find a worker"; $("findBtn").classList.remove("ghost"); }
+}
+$("hWork").onclick = function () { setPane("work"); }; $("hBuy").onclick = function () { setPane("buy"); };
+$("mNeed").onclick = function () { setHome("need"); }; $("mFind").onclick = function () { setHome("find"); };
+$("findBtn").onclick = function () {
+  if (searching) { stopSearch(); $("searchState").textContent = "Search stopped."; return; }
+  if (!$("fQ").value.trim()) return say($("jobMsg"), "Type the work you need first, for example plumber.", "err");
+  say($("jobMsg"), "");
+  searching = true; $("findBtn").textContent = "Stop searching"; $("findBtn").classList.add("ghost");
+  $("searchState").textContent = "Searching live for " + $("fQ").value.trim() + " near you. New workers appear here by themselves.";
+  loadWorkers(); searchTimer = setInterval(loadWorkers, 15000);
+};
+
+/* Buy & sell */
+var bMode = "browse";
+function setB(m) {
+  bMode = m;
+  $("bBrowse").classList.toggle("on", m === "browse"); $("bSell").classList.toggle("on", m === "sell"); $("bWant").classList.toggle("on", m === "want");
+  $("bList").hidden = m !== "browse"; $("bForm").hidden = m === "browse";
+  say($("bMsg"), "");
+  if (m === "browse") loadBuy();
+  else {
+    var sell = m === "sell";
+    $("bFormT").textContent = sell ? "Sell something" : "Tell people what you want to buy";
+    $("bTitleL").textContent = sell ? "What are you selling?" : "What do you want to buy?";
+    $("bPriceL").textContent = sell ? "Price" : "Your budget";
+    $("bTransT").textContent = sell ? "I can deliver it (transport included)" : "I need a driver to bring it to me";
+    $("bPhotoBox").hidden = !sell; $("bKindBox").hidden = !sell; $("bSend").textContent = sell ? "Post for sale" : "Post what I want";
+    if (!$("bCity").value) $("bCity").value = (profile && profile.city) || "";
+    paintBRule();
+  }
+}
+/* The seller sees only their own rule, for the way they are selling */
+function paintBRule() {
+  if (bMode !== "sell") { $("bRuleBox").innerHTML = ""; return; }
+  $("bRuleBox").innerHTML = ruleBlock($("bKind").value === "ad" ? "ad" : "sale");
+}
+$("bKind").addEventListener("change", paintBRule);
+$("bBrowse").onclick = function () { setB("browse"); }; $("bSell").onclick = function () { setB("sell"); }; $("bWant").onclick = function () { setB("want"); };
+var bTimer = null;
+$("bQ").addEventListener("input", function () { clearTimeout(bTimer); bTimer = setTimeout(loadBuy, 350); });
+$("bLoc").addEventListener("change", function () { $("bPlaceBox").hidden = this.value !== "region"; loadBuy(); });
+$("bPlace").addEventListener("input", function () { clearTimeout(bTimer); bTimer = setTimeout(loadBuy, 350); });
+async function loadBuy() {
+  if (!me || !profile) return;
+  var q = sb.from("listings").select("*, profiles(name, tick, tick_free, plan, subscribed_until)").eq("country", profile.country || "").order("ad", { ascending: false }).order("created_at", { ascending: false }).limit(60);
+  var kw = $("bQ").value.trim().replace(/[%,()]/g, " ");
+  if (kw) q = q.ilike("title", "%" + kw + "%");
+  var where = $("bLoc").value, place = where === "region" ? $("bPlace").value.trim() : (profile.city || "").trim();
+  if (place) q = q.ilike("city", "%" + place.replace(/[%,()]/g, " ") + "%");
+  var r = await q;
+  if (r.error) { $("bItems").innerHTML = ""; return say($("bMsg"), "Buy & sell needs supabase-media.sql to be run first.", "err"); }
+  say($("bMsg"), "");
+  var rows = (r.data || []).filter(function (l) { return !blocked[l.seller_id]; });
+  if (!rows.length) { $("bItems").innerHTML = '<div class="empty">Nothing here yet. Tap Sell to post something, or I want to buy to tell people what you need.</div>'; return; }
+  $("bItems").innerHTML = rows.map(function (l) {
+    var mine = l.seller_id === me.id, pr = l.profiles || {}, want = l.kind === "want";
+    return '<article class="job"><h3>' + esc(l.title) + '</h3><div class="meta">' + (l.ad ? '<span class="tag" style="background:var(--grad)">Ad</span>' : '') + '<span class="tag" style="' + (want ? "background:var(--grad)" : "") + '">' + (want ? "Wanted" : "For sale") + '</span>' +
+      (l.city ? '<span>' + esc(l.city) + '</span>' : "") + (l.transport ? '<span class="tag">' + (want ? "Driver needed" : "Delivery included") + '</span>' : "") + '<span>' + esc(pr.name || "Someone") + tickHtml(tickOf(pr)) + '</span></div>' +
+      (l.photo_path ? '<img class="lphoto" loading="lazy" alt="" src="' + esc(imgUrl("market", l.photo_path)) + '">' : "") +
+      (l.description ? '<p style="margin:8px 0 0">' + esc(l.description) + '</p>' : "") +
+      (l.price != null ? '<div class="price">' + Number(l.price).toLocaleString() + '</div>' : "") +
+      (!mine ? '<div class="row2"><button class="btn small" type="button" data-msg="' + esc(l.seller_id) + '" data-name="' + esc(pr.name || "Seller") + '" data-pre="' + esc((want ? "Hi, I can help with: " : "Hi, is this still available: ") + l.title) + '">' + (want ? "Message buyer" : "Message seller") + '</button><button class="btn small ghost" type="button" data-rep="listing" data-id="' + l.id + '" data-user="' + esc(l.seller_id) + '">Report</button><button class="btn small ghost" type="button" data-blk="' + esc(l.seller_id) + '" data-name="' + esc(pr.name || "this seller") + '">Block</button></div>' : "") +
+      (mine ? '<div class="row2"><button class="btn small ghost" type="button" data-ldel="' + l.id + '" data-lpath="' + esc(l.photo_path || "") + '">Delete</button></div>' : "") + '</article>';
+  }).join("");
+  document.querySelectorAll("#bItems [data-ldel]").forEach(function (b) {
+    b.onclick = async function () {
+      if (!confirm("Delete this post?")) return;
+      b.disabled = true;
+      var d = await sb.from("listings").delete().eq("id", Number(b.dataset.ldel));
+      if (d.error) { b.disabled = false; return say($("bMsg"), nice(d.error), "err"); }
+      if (b.dataset.lpath) await sb.storage.from("market").remove([b.dataset.lpath]);
+      loadBuy();
+    };
+  });
+}
+$("bForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var title = $("bTitle").value.trim(), city = $("bCity").value.trim(), sell = bMode === "sell", price = $("bPrice").value;
+  if (!title || !city || (sell && price === "")) return say($("bMsg"), sell ? "Add what you sell, the price and your city." : "Add what you want to buy and your city.", "err");
+  var needDriver = $("bTrans").checked;
+  if (sell) {
+    var k = $("bKind").value === "ad" ? "ad" : "sale";
+    return askAgree(k, price === "" ? null : price, function (ok) {
+      if (!ok) return;
+      if (needDriver) askAgree("driver", null, function (ok2) { if (ok2) realPost(); });
+      else realPost();
+    });
+  }
+  if (needDriver) return askAgree("driver", null, function (ok2) { if (ok2) realPost(); });
+  realPost();
+  async function realPost() {
+  var btn = $("bSend"); btn.disabled = true;
+  var path = null, f = $("bFile").files[0];
+  if (sell && f) {
+    var blob = await shrink(f, 1280);
+    path = me.id + "/" + Date.now() + ".jpg";
+    var up = await sb.storage.from("market").upload(path, blob, { contentType: "image/jpeg" });
+    if (up.error) { btn.disabled = false; return say($("bMsg"), nice(up.error), "err"); }
+  }
+  var ins = await sb.from("listings").insert({ kind: bMode, title: title, price: price === "" ? null : Number(price), city: city,
+    country: profile.country || "", description: $("bDesc").value.trim() || null, photo_path: path, ad: sell && $("bKind").value === "ad",
+    lat: bPick ? bPick.lat : null, lng: bPick ? bPick.lng : null, transport: needDriver });
+  btn.disabled = false;
+  if (ins.error) { if (path) await sb.storage.from("market").remove([path]); return say($("bMsg"), nice(ins.error), "err"); }
+  $("bTitle").value = ""; $("bPrice").value = ""; $("bDesc").value = ""; $("bFile").value = ""; $("bKind").value = "post"; $("bTrans").checked = false;
+  setB("browse");
+  say($("bMsg"), "Posted.", "ok");
+  }
+});
+
+/* Home: find workers by what they do. Live workers first, nearest first. */
+var CATS = ["Cleaning","Plumbing","Electrical","Carpentry","Painting","Repairs and maintenance","Construction","Moving and delivery","Driver (car)","Rider (motorbike)","Car services","Farming","Cooking and catering","Tailoring and fashion","Beauty and hair","Teaching and tutoring","Healthcare and caregiving","Security","IT and software","Design and media","Office and admin","Sales and marketing","Accounting","Legal","Events and entertainment"];
+$("cats").innerHTML = CATS.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
+["fCity", "fArea", "fTerm"].forEach(function (id) { $(id).addEventListener("change", loadWorkers); });
+var qTimer = null;
+$("fQ").addEventListener("input", function () { clearTimeout(qTimer); qTimer = setTimeout(loadWorkers, 350); });
+
+var myPos = null, homePins = [], mapOn = false;
+$("mapBtn").onclick = function () { mapOn = !mapOn; $("mapBtn").textContent = mapOn ? "Hide map" : "Show map"; drawHome(); };
+function drawHome() {
+  var el = $("homeMap");
+  el.hidden = !mapOn;
+  if (!mapOn) return;
+  if (!window.L) { el.hidden = true; return say($("jobMsg"), "The map could not load. Check your connection.", "err"); }
+  if (!el._m) {
+    el._m = L.map(el).setView([0, 0], 2);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(el._m);
+    el._g = L.layerGroup().addTo(el._m);
+  }
+  el._m.invalidateSize(); el._g.clearLayers();
+  var pts = [];
+  homePins.forEach(function (w) {
+    L.circleMarker([w.pe.lat, w.pe.lng], { radius: 10, color: "#fff", weight: 3, fillColor: "#ffc83d", fillOpacity: 1 }).addTo(el._g)
+      .bindPopup("<b>" + esc(w.p.name || "Worker") + "</b><br>" + esc(w.p.occupation || ""));
+    pts.push([w.pe.lat, w.pe.lng]);
+  });
+  if (myPos) { L.circleMarker([myPos.lat, myPos.lng], { radius: 9, color: "#fff", weight: 3, fillColor: "#1d6bff", fillOpacity: 1 }).addTo(el._g).bindPopup("You"); pts.push([myPos.lat, myPos.lng]); }
+  if (pts.length > 1) el._m.fitBounds(pts, { padding: [40, 40], maxZoom: 15 });
+  else if (pts.length === 1) el._m.setView(pts[0], 14);
+}
+function findMe() {
+  if (!navigator.geolocation || myPos) return;
+  navigator.geolocation.getCurrentPosition(function (p) { myPos = { lat: p.coords.latitude, lng: p.coords.longitude }; lastPos = lastPos || myPos; loadWorkers(); },
+    function () {}, { timeout: 8000, maximumAge: 60000 });
+}
+function fresh(pr) { return !!(pr && pr.live && Date.now() - new Date(pr.updated_at).getTime() < 3 * 60000); }
+function lastSeen(pe) {
+  if (!pe || !pe.updated_at) return "Not seen recently";
+  if (fresh(pe)) return "Active now";
+  var m = Math.round((Date.now() - new Date(pe.updated_at).getTime()) / 60000);
+  if (m < 60) return "Last seen " + Math.max(1, m) + " min ago";
+  if (m < 1440) return "Last seen " + Math.round(m / 60) + " h ago";
+  return "Last seen " + Math.round(m / 1440) + " days ago";
+}
+function dist(d) { return d < 1 ? Math.max(100, Math.round(d * 10) * 100) + " m" : d.toFixed(1) + " km"; }
+
+async function loadWorkers() {
+  if (!me || !profile || homeMode !== "need") return;
+  var city = $("fCity").value.trim().toLowerCase(), area = $("fArea").value.trim().toLowerCase(), term = $("fTerm").value;
+  var kw = $("fQ").value.trim().replace(/[%,()]/g, " ");
+  var base = "id, name, occupation, bio, city, area, rating, jobs_done, verified, tick, tick_free, plan, subscribed_until";
+  function mk(fields) {
+    var q = sb.from("profiles").select(fields).eq("country", profile.country || "").neq("id", me.id).not("occupation", "is", null).limit(80);
+    return kw ? q.ilike("occupation", "%" + kw + "%") : q;
+  }
+  var r = await mk(base + ", avatar_path");
+  if (r.error) r = await mk(base);
+  if (r.error) { $("jobList").innerHTML = ""; return say($("jobMsg"), nice(r.error), "err"); }
+  say($("jobMsg"), "");
+  var rows = (r.data || []).filter(function (p) { return !blocked[p.id]; }), ids = rows.map(function (p) { return p.id; }), pres = {};
+  if (ids.length) {
+    var pr = await sb.from("presence").select("*").in("user_id", ids);
+    (pr.data || []).forEach(function (x) { pres[x.user_id] = x; });
+  }
+  var out = [];
+  rows.forEach(function (p) {
+    if (!p.occupation) return;
+    var pe = pres[p.id], live = fresh(pe), pcity = ((pe && pe.city) || p.city || "").toLowerCase(), parea = ((pe && pe.area) || p.area || "").toLowerCase();
+    var d = (live && pe.lat != null && myPos) ? km(myPos, { lat: pe.lat, lng: pe.lng }) : null;
+    if (city && pcity !== city) return;
+    /* Short-term: only workers in the same area (or live and close by). Long-term: anyone in the city or wider region. */
+    if (term === "short" && area && parea !== area && !(d !== null && d <= 5)) return;
+    out.push({ p: p, live: live, d: d, pe: pe });
+  });
+  /* Short-term: workers nearby first, then the rest. Inside each group: verified first, active first, then nearest and best rated.
+     Long-term: verified first, then active, then rating. Active means live now, and the last-seen time is shown on each card. */
+  var NEAR = 5;
+  out.sort(function (a, b) {
+    if (term === "short") {
+      var an = a.d !== null && a.d <= NEAR, bn = b.d !== null && b.d <= NEAR;
+      if (an !== bn) return an ? -1 : 1;
+    }
+    if (!!a.p.verified !== !!b.p.verified) return a.p.verified ? -1 : 1;
+    if (a.live !== b.live) return a.live ? -1 : 1;
+    if (a.d !== null && b.d !== null && a.d !== b.d) return a.d - b.d;
+    return (b.p.rating || 0) - (a.p.rating || 0);
+  });
+  homePins = out.filter(function (w) { return w.live && w.pe && w.pe.lat != null; });
+  drawHome();
+  if (!out.length) { $("jobList").innerHTML = '<div class="empty">No workers found here yet. Try another type of work or a wider area.</div>'; return; }
+  $("jobList").innerHTML = out.map(function (w) {
+    var p = w.p;
+    return '<article class="job"><div style="display:flex;gap:10px;align-items:center"><div class="wav" style="' + (p.avatar_path ? "background-image:url('" + esc(imgUrl("avatars", p.avatar_path)) + "')" : "") + '">' + (p.avatar_path ? "" : esc((p.name || "?").charAt(0).toUpperCase())) + '</div><h3 style="margin:0">' + esc(p.name || "Worker") + tickHtml(tickOf(p)) + '</h3></div>' +
+      '<div class="meta">' + (w.live ? '<span class="pill ok">Live now' + (w.d !== null ? " · " + esc(dist(w.d)) + " away" : "") + '</span>' : '') +
+      '<span class="tag">' + esc(p.occupation) + '</span><span>' + esc([p.area, p.city].filter(Boolean).join(", ")) + '</span><span>' + esc(lastSeen(w.pe)) + '</span></div>' +
+      (p.bio ? '<p style="margin:8px 0 0">' + esc(p.bio) + '</p>' : "") +
+      '<div class="meta" style="margin-top:6px">★ ' + Number(p.rating || 0).toFixed(1) + ' · ' + (p.jobs_done || 0) + ' jobs done' + (p.verified ? ' · Verified' : '') + '</div>' +
+      '<details class="hire" data-w="' + esc(p.id) + '"><summary class="btn small" style="display:inline-block;margin-top:10px">Hire</summary>' +
+      '<textarea rows="2" maxlength="300" placeholder="What do you need done, and where?" aria-label="Details"></textarea>' +
+      (term === "long" ? '<label>How long?</label><select data-dur><option>1 month</option><option>3 months</option><option>6 months</option><option>1 year</option></select>' +
+        '<label>Is this company work or personal work?</label><select data-who><option value="company">Company work</option><option value="personal">Personal work</option></select>' +
+        '<div data-hrule style="margin-top:8px">' + ruleBlock("longCompany") + '</div>' : '') +
+      '<label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" data-trans> I need a driver or transport for this work</label>' +
+      '<div class="offerbox"><input type="number" min="0" inputmode="decimal" placeholder="Your price" aria-label="Your price">' +
+      '<button class="btn small" type="button" data-hire>Send request</button></div></details>' +
+      '<div class="row2"><button class="btn small ghost" type="button" data-msg="' + esc(p.id) + '" data-name="' + esc(p.name || "Worker") + '">Message</button>' +
+      '<button class="btn small ghost" type="button" data-rep="user" data-id="' + esc(p.id) + '" data-user="' + esc(p.id) + '">Report</button>' +
+      '<button class="btn small ghost" type="button" data-blk="' + esc(p.id) + '" data-name="' + esc(p.name || "this person") + '">Block</button></div></article>';
+  }).join("");
+  document.querySelectorAll("#jobList .hire").forEach(function (box) {
+    var who = box.querySelector("[data-who]");
+    if (who) who.onchange = function () {
+      box.querySelector("[data-hrule]").innerHTML = who.value === "company" ? ruleBlock("longCompany") :
+        '<div class="kv" style="display:block"><b>Personal work</b><p class="meta" style="margin:2px 0 0">The worker pays this</p><p style="margin:4px 0 0">5% of the amount the worker receives. You pay nothing extra.</p></div>';
+    };
+    box.querySelector("[data-hire]").onclick = async function () {
+      var btn = this, details = box.querySelector("textarea").value.trim(), price = box.querySelector("input").value;
+      var isLong = $("fTerm").value === "long", payload = { worker_id: box.dataset.w, term: isLong ? "long" : "short", details: details, budget: price === "" ? null : Number(price) };
+      if (!details) return say($("jobMsg"), "Say what you need done first.", "err");
+      if (isLong) { payload.duration = box.querySelector("[data-dur]").value; payload.hirer_type = box.querySelector("[data-who]").value; }
+      var kind = !isLong ? "short" : (payload.hirer_type === "company" ? "longCompany" : "longPersonal");
+      payload.transport = box.querySelector("[data-trans]").checked;
+      askAgree(kind, price === "" ? null : price, function (ok) {
+        if (!ok) return;
+        if (payload.transport) askAgree("driver", null, function (ok2) { if (ok2) sendHire(); });
+        else sendHire();
+      });
+      function sendHire() { doHire(); }
+      async function doHire() {
+      btn.disabled = true;
+      var ins = await sb.from("requests").insert(payload);
+      if (ins.error && /duration|hirer_type/i.test(ins.error.message || "")) { btn.disabled = false; return say($("jobMsg"), "Run supabase-updates.sql first, then try again.", "err"); }
+      if (ins.error && /transport/i.test(ins.error.message || "")) { btn.disabled = false; return say($("jobMsg"), "Run supabase-transport.sql first, then try again.", "err"); }
+      btn.disabled = false;
+      if (ins.error) return say($("jobMsg"), nice(ins.error), "err");
+      box.open = false; box.querySelector("textarea").value = ""; box.querySelector("input").value = "";
+      say($("jobMsg"), "Request sent. You will see the answer in My jobs.", "ok");
+      }
+    };
+  });
+}
+
+/* My presence: go live (shares an approximate spot) or stay on the location set in the profile */
+var liveWatch = null, lastPres = 0;
+function liveOn() { return liveWatch !== null; }
+function paintGo() {
+  $("goLive").textContent = liveOn() ? "Stop live" : "Go live";
+  $("goLive").classList.toggle("ghost", liveOn());
+  $("goState").textContent = liveOn() ? "You are live. People who need your work near you can see you now." :
+    "You are not live. People can still find you by your set location: " + ([profile && profile.area, profile && profile.city].filter(Boolean).join(", ") || "not set") + ".";
+}
+async function savePresence(live, pos) {
+  var row = { user_id: me.id, live: live, country: profile.country, city: profile.city, area: profile.area, updated_at: new Date().toISOString() };
+  if (pos) { row.lat = Math.round(pos.coords.latitude * 100) / 100; row.lng = Math.round(pos.coords.longitude * 100) / 100; } else { row.lat = null; row.lng = null; }
+  return sb.from("presence").upsert(row);
+}
+$("goLive").onclick = async function () {
+  if (liveOn()) {
+    navigator.geolocation.clearWatch(liveWatch); liveWatch = null; await savePresence(false, null); paintGo(); return;
+  }
+  if (!navigator.geolocation) return say($("jobMsg"), "This phone or browser cannot share location.", "err");
+  liveWatch = navigator.geolocation.watchPosition(async function (pos) {
+    lastPos = { lat: pos.coords.latitude, lng: pos.coords.longitude }; myPos = myPos || lastPos;
+    if (Date.now() - lastPres < 30000) return;
+    lastPres = Date.now();
+    var r = await savePresence(true, pos);
+    if (r.error) say($("jobMsg"), nice(r.error), "err");
+  }, function (err) {
+    liveWatch = null; paintGo();
+    say($("jobMsg"), err.code === 1 ? "Location is blocked. Allow location for this site in your browser settings, then try again." : "Could not find your location. Try near a window or outside.", "err");
+  }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  paintGo();
+};
+
+/* My jobs: requests I sent */
+var RSTAT = { pending: "Waiting for answer", accepted: "Accepted", declined: "Declined", done: "Done", cancelled: "Cancelled" };
+async function loadMine() {
+  var r = await sb.from("requests").select("*").eq("hirer_id", me.id).order("created_at", { ascending: false }).limit(50);
+  if (r.error) { $("mineList").innerHTML = ""; return say($("mineMsg"), nice(r.error), "err"); }
+  say($("mineMsg"), "");
+  var rows = r.data || [];
+  if (!rows.length) { $("mineList").innerHTML = '<div class="empty">You have not hired anyone yet. Go to Home, pick a worker and tap Hire.</div>'; return; }
+  var ids = rows.map(function (q) { return q.worker_id; }), wp = {}, rev = {};
+  var pw = await sb.from("profiles").select("id, name, occupation").in("id", ids);
+  (pw.data || []).forEach(function (p) { wp[p.id] = p; });
+  var rv = await sb.from("reviews").select("request_id").in("request_id", rows.map(function (q) { return q.id; }));
+  (rv.data || []).forEach(function (x) { rev[x.request_id] = true; });
+  $("mineList").innerHTML = rows.map(function (q) {
+    var w = wp[q.worker_id] || {}, nm = w.name || "The worker", rate = "";
+    if (q.status === "done" && !rev[q.id]) {
+      rate = '<div class="rate" data-rreq="' + q.id + '" data-rworker="' + esc(q.worker_id) + '"><p class="meta" style="margin:0">Rate ' + esc(nm) + ' for this work</p><div class="stars">' +
+        [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" aria-label="' + n + ' stars">&#9733;</button>'; }).join("") +
+        '</div><input class="rcomment" maxlength="300" placeholder="Say how the work went"><button class="btn small" type="button" data-send style="margin-top:10px">Send rating</button></div>';
+    } else if (q.status === "done") rate = '<div class="meta" style="margin-top:8px">You rated this work.</div>';
+    return '<article class="job"><h3>' + esc(nm) + (w.occupation ? ' · ' + esc(w.occupation) : '') + '</h3>' +
+      '<div class="meta"><span class="tag">' + (q.term === "short" ? "Short-term" : "Long-term") + '</span><span class="pill ' + (q.status === "accepted" || q.status === "done" ? "ok" : "no") + '">' + esc(RSTAT[q.status] || q.status) + '</span></div>' +
+      (q.details ? '<p style="margin:8px 0 0">' + esc(q.details) + '</p>' : "") +
+      (q.budget != null ? '<div class="price">' + Number(q.budget).toLocaleString() + '</div>' : "") +
+      (q.status === "accepted" || q.status === "pending" ? '<div class="row2"><button class="btn small ghost" type="button" data-msg="' + esc(q.worker_id) + '" data-name="' + esc(nm) + '">Chat</button></div>' : "") +
+      (q.status === "accepted" ? liveBox(q.worker_id, nm) : "") +
+      (q.status === "pending" ? '<div class="row2"><button class="btn small ghost" type="button" data-rq="' + q.id + '" data-set="cancelled">Cancel request</button></div>' : "") +
+      (q.status === "accepted" ? '<div class="row2"><button class="btn small" type="button" data-rq="' + q.id + '" data-set="done">Mark done</button>' +
+        '<button class="btn small ghost" type="button" data-rq="' + q.id + '" data-set="cancelled">Cancel</button></div>' : "") + rate + '</article>';
+  }).join("");
+  wireLive("#mineList");
+  document.querySelectorAll("#mineList .rate").forEach(function (box) {
+    var val = 0, stars = box.querySelectorAll(".stars button");
+    stars.forEach(function (s, i) {
+      s.onclick = function () { val = i + 1; stars.forEach(function (t, k) { t.classList.toggle("on", k < val); }); };
+    });
+    box.querySelector("[data-send]").onclick = async function () {
+      if (!val) return say($("mineMsg"), "Tap the stars first.", "err");
+      var btn = this; btn.disabled = true;
+      var r = await sb.from("reviews").insert({ request_id: Number(box.dataset.rreq), worker_id: box.dataset.rworker, rating: val,
+        comment: box.querySelector(".rcomment").value.trim() || null });
+      if (r.error) { btn.disabled = false; return say($("mineMsg"), nice(r.error), "err"); }
+      loadMine();
+    };
+  });
+  document.querySelectorAll("#mineList [data-set]").forEach(function (b) {
+    b.onclick = async function () {
+      b.disabled = true;
+      var u = await sb.from("requests").update({ status: b.dataset.set }).eq("id", Number(b.dataset.rq));
+      if (u.error) { b.disabled = false; return say($("mineMsg"), nice(u.error), "err"); }
+      loadMine();
+    };
+  });
+}
+
+/* Safety: report and block */
+var blocked = {};
+async function loadBlocks() {
+  var r = await sb.from("blocks").select("blocked_id").eq("blocker_id", me.id);
+  blocked = {}; (r.data || []).forEach(function (x) { blocked[x.blocked_id] = true; });
+}
+async function reportIt(kind, id, user) {
+  var why = prompt("Why are you reporting this? (a few words)");
+  if (why === null) return;
+  why = why.trim(); if (why.length < 3) return alert("Please write a few words so we can check it.");
+  var r = await sb.from("reports").insert({ kind: kind, target_id: String(id), target_user: user || null, reason: why.slice(0, 500) });
+  alert(r.error ? "Reports need supabase-safety.sql to be run first." : "Thank you. We will check it.");
+}
+async function blockIt(uid, name) {
+  if (!confirm("Block " + name + "? You will no longer see them, and they cannot message or hire you.")) return false;
+  var r = await sb.from("blocks").insert({ blocked_id: uid });
+  if (r.error) { alert("Blocking needs supabase-safety.sql to be run first."); return false; }
+  blocked[uid] = true; return true;
+}
+document.addEventListener("click", async function (e) {
+  var b = e.target.closest && e.target.closest("[data-rep],[data-blk]");
+  if (!b) return;
+  if (b.dataset.rep) { reportIt(b.dataset.rep, b.dataset.id, b.dataset.user); return; }
+  if (await blockIt(b.dataset.blk, b.dataset.name || "this person")) {
+    if (!$("vNotes").hidden) { setN("msg"); } else if (!$("vWatch").hidden) { loadFeed(); } else homeRefresh();
+  }
+});
+
+/* Chat between two people */
+var chatWith = null, chatName = "", chatTimer = null;
+function setN(t, keep) {
+  $("nReq").classList.toggle("on", t === "req"); $("nMsg").classList.toggle("on", t === "msg");
+  $("paneReq").hidden = t !== "req"; $("paneMsg").hidden = t !== "msg";
+  if (t === "req") { stopChat(); loadNotes(); } else if (!keep) loadConvs();
+}
+function stopChat() { clearInterval(chatTimer); chatTimer = null; chatWith = null; }
+$("nReq").onclick = function () { setN("req"); }; $("nMsg").onclick = function () { setN("msg"); };
+async function loadConvs() {
+  stopChat(); $("thread").hidden = true; $("convList").hidden = false;
+  var r = await sb.from("messages").select("*").or("sender_id.eq." + me.id + ",receiver_id.eq." + me.id).order("created_at", { ascending: false }).limit(200);
+  if (r.error) { $("convList").innerHTML = ""; return say($("chatMsg"), "Messages need supabase-chat.sql to be run first.", "err"); }
+  say($("chatMsg"), "");
+  var last = {}, unread = {}, order = [];
+  (r.data || []).forEach(function (m) {
+    var o = m.sender_id === me.id ? m.receiver_id : m.sender_id;
+    if (blocked[o]) return;
+    if (!last[o]) { last[o] = m; order.push(o); }
+    if (m.receiver_id === me.id && !m.read_at) unread[o] = (unread[o] || 0) + 1;
+  });
+  if (!order.length) { $("convList").innerHTML = '<div class="empty">No messages yet. Tap Message on a worker or a seller to start.</div>'; return; }
+  var pr = await sb.from("profiles").select("id, name").in("id", order), nm = {};
+  (pr.data || []).forEach(function (x) { nm[x.id] = x.name; });
+  $("convList").innerHTML = order.map(function (o) {
+    return '<div class="note conv" data-c="' + esc(o) + '" data-name="' + esc(nm[o] || "Someone") + '"><p><b>' + esc(nm[o] || "Someone") + '</b>' +
+      (unread[o] ? ' <span class="pill ok">' + unread[o] + ' new</span>' : '') + '</p><p class="meta">' + (last[o].sender_id === me.id ? "You: " : "") + esc(last[o].body.slice(0, 70)) + '</p></div>';
+  }).join("");
+  document.querySelectorAll("#convList [data-c]").forEach(function (c) { c.onclick = function () { showThread(c.dataset.c, c.dataset.name); }; });
+  pollBadge();
+}
+function showThread(uid, name, pre) {
+  chatWith = uid; chatName = name;
+  $("thName").textContent = name;
+  $("thRep").dataset.rep = "user"; $("thRep").dataset.id = uid; $("thRep").dataset.user = uid;
+  $("thBlk").dataset.blk = uid; $("thBlk").dataset.name = name;
+  $("convList").hidden = true; $("thread").hidden = false;
+  if (pre && !$("thInput").value) $("thInput").value = pre;
+  loadThread(true);
+  clearInterval(chatTimer); chatTimer = setInterval(loadThread, 6000);
+}
+async function loadThread(jump) {
+  if (!chatWith) return;
+  var a = chatWith;
+  var r = await sb.from("messages").select("*").or("and(sender_id.eq." + me.id + ",receiver_id.eq." + a + "),and(sender_id.eq." + a + ",receiver_id.eq." + me.id + ")").order("created_at", { ascending: true }).limit(200);
+  if (a !== chatWith) return;
+  if (r.error) return say($("chatMsg"), "Messages need supabase-chat.sql to be run first.", "err");
+  var box = $("thMsgs"), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  box.innerHTML = (r.data || []).map(function (m) {
+    var t = new Date(m.created_at);
+    var voice = m.voice_path ? '<audio controls preload="none" data-vp="' + esc(m.voice_path) + '" style="width:100%;margin-top:4px"></audio>' : "";
+    return '<div class="bub' + (m.sender_id === me.id ? " me" : "") + '">' + (m.voice_path ? voice : esc(m.body)) + '<small>' + t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + '</small></div>';
+  }).join("") || '<div class="empty">Say hello.</div>';
+  box.querySelectorAll("audio[data-vp]").forEach(function (au) {
+    sb.storage.from("voice").createSignedUrl(au.dataset.vp, 3600).then(function (x) { if (x.data) au.src = x.data.signedUrl; });
+  });
+  if (jump === true || atEnd) box.scrollTop = box.scrollHeight;
+  var unread = (r.data || []).some(function (m) { return m.receiver_id === me.id && !m.read_at; });
+  if (unread) { await sb.from("messages").update({ read_at: new Date().toISOString() }).eq("receiver_id", me.id).eq("sender_id", a).is("read_at", null); pollBadge(); }
+}
+$("thBack").onclick = function () { loadConvs(); };
+/* Voice notes: tap Mic to start, tap again to send. Stored privately; only the two people can hear them. */
+var rec = null, recChunks = [], recTimer = null;
+$("thMic").onclick = async function () {
+  if (rec) { rec.stop(); return; }
+  if (!chatWith) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) return say($("chatMsg"), "Voice notes do not work in this browser. Try Chrome or Safari.", "err");
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    var type = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
+    rec = new MediaRecorder(stream, type ? { mimeType: type } : {});
+    recChunks = [];
+    rec.ondataavailable = function (e) { if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = async function () {
+      clearTimeout(recTimer);
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      var blob = new Blob(recChunks, { type: rec.mimeType || "audio/webm" }), to = chatWith;
+      rec = null; $("thRec").hidden = true; $("thMic").textContent = "Mic";
+      if (blob.size < 1000) return say($("chatMsg"), "That was too short. Try again.", "err");
+      if (blob.size > 3145728) return say($("chatMsg"), "That voice note is too long. Keep it under 60 seconds.", "err");
+      say($("chatMsg"), "Sending voice note...", "ok");
+      var ext = (blob.type.indexOf("mp4") >= 0) ? "m4a" : "webm";
+      var path = me.id + "/" + Date.now() + "." + ext;
+      var up = await sb.storage.from("voice").upload(path, blob, { contentType: blob.type });
+      if (up.error) return say($("chatMsg"), nice(up.error), "err");
+      var ins = await sb.from("messages").insert({ receiver_id: to, body: "Voice note", voice_path: path });
+      if (ins.error) return say($("chatMsg"), nice(ins.error), "err");
+      say($("chatMsg"), "", "ok");
+      loadThread(true);
+    };
+    rec.start();
+    $("thMic").textContent = "Stop";
+    $("thRec").hidden = false;
+    recTimer = setTimeout(function () { if (rec) rec.stop(); }, 60000);
+  } catch (err) {
+    rec = null;
+    say($("chatMsg"), "Microphone is blocked. Allow the microphone for this site, then try again.", "err");
+  }
+};
+$("thForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var body = $("thInput").value.trim(); if (!body || !chatWith) return;
+  $("thInput").value = "";
+  var r = await sb.from("messages").insert({ receiver_id: chatWith, body: body });
+  if (r.error) { $("thInput").value = body; return say($("chatMsg"), nice(r.error), "err"); }
+  loadThread(true);
+});
+function openChat(uid, name, pre) {
+  show("vNotes", 3); setN("msg", true); showThread(uid, name, pre);
+}
+document.addEventListener("click", function (e) {
+  var b = e.target.closest && e.target.closest("[data-msg]");
+  if (b) openChat(b.dataset.msg, b.dataset.name || "Chat", b.dataset.pre || "");
+});
+
+/* Alerts: requests people sent to me. The red dot shows while one is waiting. */
+async function pollBadge() {
+  if (!me) return;
+  var r = await sb.from("requests").select("id", { count: "exact", head: true }).eq("worker_id", me.id).eq("status", "pending");
+  var m = await sb.from("messages").select("id", { count: "exact", head: true }).eq("receiver_id", me.id).is("read_at", null);
+  var n = (r.error ? 0 : (r.count || 0)) + (m.error ? 0 : (m.count || 0));
+  $("badge").hidden = n === 0;
+  if (n > lastPending && lastPending !== null && !$("vNotes").hidden) { if (nTabNow() === "req") loadNotes(); else if (chatWith === null) loadConvs(); }
+  lastPending = n;
+}
+function nTabNow() { return $("paneMsg").hidden ? "req" : "msg"; }
+var lastPending = null;
+setInterval(pollBadge, 20000);
+
+async function loadNotes() {
+  var r = await sb.from("requests").select("*").eq("worker_id", me.id).order("created_at", { ascending: false }).limit(40);
+  if (r.error) { $("noteList").innerHTML = ""; return say($("noteMsg"), nice(r.error), "err"); }
+  say($("noteMsg"), "");
+  var rows = r.data || [];
+  var pending = rows.filter(function (q) { return q.status === "pending"; }).length;
+  pollBadge();
+  if (!rows.length) { $("noteList").innerHTML = '<div class="empty">No requests yet. When someone wants to hire you, it shows here. Tap Go live on Home so more people find you.</div>'; return; }
+  var hp = {};
+  var pr = await sb.from("profiles").select("id, name, rating, jobs_done, verified, tick, tick_free, plan, subscribed_until").in("id", rows.map(function (q) { return q.hirer_id; }));
+  (pr.data || []).forEach(function (p) { hp[p.id] = p; });
+  $("noteList").innerHTML = rows.map(function (q) {
+    var h = hp[q.hirer_id] || {}, nm = h.name || "Someone";
+    return '<div class="note"><p><b>' + esc(nm) + '</b>' + tickHtml(tickOf(h)) + ' wants to hire you' + (q.budget != null ? ' for ' + Number(q.budget).toLocaleString() : '') + '</p>' +
+      '<p class="meta">' + (q.term === "short" ? "Short-term" : "Long-term") + (q.duration ? ' · ' + esc(q.duration) : '') + (q.hirer_type ? ' · ' + (q.hirer_type === "company" ? "Company work" : "Personal work") : '') + ' · ★ ' + Number(h.rating || 0).toFixed(1) + (h.verified ? ' · Verified' : '') + '</p>' +
+      (q.details ? '<p>' + esc(q.details) + '</p>' : "") +
+      '<div class="meta"><span class="pill ' + (q.status === "accepted" || q.status === "done" ? "ok" : "no") + '">' + esc(RSTAT[q.status] || q.status) + '</span></div>' +
+      (q.term === "short" ? ruleBlock("work") : q.hirer_type === "company" ? ruleBlock("longCompany") : q.hirer_type === "personal" ? ruleBlock("longPersonal") : "") +
+      (q.status === "pending" ? '<div class="row2"><button class="btn small" type="button" data-rq="' + q.id + '" data-to="accepted" data-kind="' + (q.term === "short" ? "short" : (q.hirer_type === "company" ? "longCompany" : "longPersonal")) + '" data-amt="' + (q.budget != null ? q.budget : "") + '" data-trans="' + (q.transport ? "1" : "") + '">Accept</button>' +
+        '<button class="btn small ghost" type="button" data-rq="' + q.id + '" data-to="declined">Decline</button></div>' : "") +
+      (q.status === "accepted" || q.status === "pending" ? '<div class="row2"><button class="btn small ghost" type="button" data-msg="' + esc(q.hirer_id) + '" data-name="' + esc(nm) + '">Chat</button></div>' : "") +
+      (q.status === "accepted" ? liveBox(q.hirer_id, nm) : "") + '</div>';
+  }).join("");
+  wireLive("#noteList");
+  document.querySelectorAll("#noteList [data-to]").forEach(function (b) {
+    b.onclick = function () {
+      var go = async function () {
+        b.disabled = true;
+        var u = await sb.from("requests").update({ status: b.dataset.to }).eq("id", Number(b.dataset.rq));
+        if (u.error) { b.disabled = false; return say($("noteMsg"), nice(u.error), "err"); }
+        loadNotes();
+      };
+      if (b.dataset.to !== "accepted") return go();
+      askAgree(b.dataset.kind || "short", b.dataset.amt || null, function (ok) {
+        if (!ok) return;
+        if (b.dataset.trans === "1") askAgree("driver", null, function (ok2) { if (ok2) go(); });
+        else go();
+      });
+    };
+  });
+}
+
+/* Live location with a map, like a ride app: shared only between the two people of an accepted request */
+var shareId = null, lastPos = null, lastSent = 0;
+function sharing() { return shareId !== null; }
+function km(a, b) {
+  var rad = Math.PI / 180, dLa = (b.lat - a.lat) * rad, dLo = (b.lng - a.lng) * rad;
+  var h = Math.pow(Math.sin(dLa / 2), 2) + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.pow(Math.sin(dLo / 2), 2);
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+function liveBox(partner, name) {
+  return '<div class="live" data-partner="' + esc(partner) + '" data-name="' + esc(name) + '">' +
+    '<div class="map" hidden></div>' +
+    '<div class="row2"><button class="btn small" type="button" data-share>Share my location</button>' +
+    '<button class="btn small ghost" type="button" data-see>Where are they?</button></div>' +
+    '<div class="meta liveout" style="margin-top:8px">Keep Rehoboth open while you share. Only this person can see it, and only until the work is done.</div></div>';
+}
+function wireLive(sel) {
+  document.querySelectorAll(sel + " .live").forEach(function (box) {
+    box.querySelector("[data-share]").onclick = function () { if (sharing()) stopShare(); else startShare(box.querySelector(".liveout")); };
+    box.querySelector("[data-see]").onclick = function () { box.dataset.on = "1"; seeThem(box); };
+  });
+  if (sharing() && !document.querySelector(".live")) stopShare();
+  paintLive();
+}
+function paintLive() {
+  document.querySelectorAll("[data-share]").forEach(function (b) {
+    b.textContent = sharing() ? "Stop sharing" : "Share my location";
+    b.classList.toggle("ghost", sharing());
+  });
+}
+function startShare(msgEl) {
+  if (!navigator.geolocation) return say(msgEl, "This phone or browser cannot share location.", "err");
+  shareId = navigator.geolocation.watchPosition(async function (pos) {
+    lastPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (Date.now() - lastSent < 10000) return;
+    lastSent = Date.now();
+    var r = await sb.from("locations").upsert({ user_id: me.id, lat: lastPos.lat, lng: lastPos.lng,
+      accuracy: pos.coords.accuracy, updated_at: new Date().toISOString() });
+    if (r.error) say(msgEl, nice(r.error), "err");
+  }, function (err) {
+    stopShare(true);
+    say(msgEl, err.code === 1 ? "Location is blocked. Allow location for this site in your browser settings, then try again." :
+      "Could not find your location. Try near a window or outside.", "err");
+  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  paintLive();
+}
+async function stopShare(skipDelete) {
+  if (shareId !== null) navigator.geolocation.clearWatch(shareId);
+  shareId = null; lastSent = 0;
+  paintLive();
+  if (!skipDelete && me) await sb.from("locations").delete().eq("user_id", me.id);
+}
+function drawMap(box, them, mine) {
+  var el = box.querySelector(".map");
+  if (!window.L) { el.hidden = true; return; }
+  el.hidden = false;
+  if (!el._m) {
+    el._m = L.map(el, { zoomControl: true, attributionControl: true }).setView([them.lat, them.lng], 15);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(el._m);
+  }
+  var m = el._m;
+  m.invalidateSize();
+  if (el._them) el._them.setLatLng([them.lat, them.lng]);
+  else el._them = L.circleMarker([them.lat, them.lng], { radius: 11, color: "#fff", weight: 3, fillColor: "#ffc83d", fillOpacity: 1 }).addTo(m);
+  if (mine) {
+    if (el._me) el._me.setLatLng([mine.lat, mine.lng]);
+    else el._me = L.circleMarker([mine.lat, mine.lng], { radius: 9, color: "#fff", weight: 3, fillColor: "#1d6bff", fillOpacity: 1 }).addTo(m);
+    m.fitBounds([[them.lat, them.lng], [mine.lat, mine.lng]], { padding: [40, 40], maxZoom: 16 });
+  } else m.setView([them.lat, them.lng], 15);
+}
+async function seeThem(box) {
+  var out = box.querySelector(".liveout"), name = box.dataset.name;
+  var r = await sb.from("locations").select("*").eq("user_id", box.dataset.partner).maybeSingle();
+  if (r.error) return say(out, nice(r.error), "err");
+  if (!r.data) { out.textContent = name + " is not sharing a location yet."; return; }
+  if (!lastPos && navigator.geolocation) {
+    await new Promise(function (res) {
+      navigator.geolocation.getCurrentPosition(function (p) { lastPos = { lat: p.coords.latitude, lng: p.coords.longitude }; res(); }, function () { res(); }, { timeout: 8000 });
+    });
+  }
+  var l = r.data, mins = Math.max(0, Math.round((Date.now() - new Date(l.updated_at).getTime()) / 60000));
+  var ago = mins < 1 ? "just now" : mins + " min ago", txt = name + " · updated " + ago;
+  if (lastPos) {
+    var d = km(lastPos, { lat: l.lat, lng: l.lng });
+    txt = name + " is about " + (d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(1) + " km") + " away · updated " + ago;
+  }
+  out.innerHTML = esc(txt) + ' · <a href="https://www.google.com/maps?q=' + Number(l.lat) + ',' + Number(l.lng) +
+    '" target="_blank" rel="noopener" style="color:var(--accent2)">Open in Maps</a>';
+  drawMap(box, { lat: l.lat, lng: l.lng }, lastPos);
+}
+setInterval(function () { document.querySelectorAll(".live[data-on]").forEach(seeThem); }, 15000);
+
+/* Watch: photos and videos of people's work. Everyone can watch; only active subscribers can post. */
+var wMode = "feed", wFilter = "all", myFollows = {};
+function subscribed() { return !!(profile && profile.subscribed_until && new Date(profile.subscribed_until) > new Date()); }
+/* Free accounts can post during their first 30 days. After that, posting is for subscribers. */
+function canPost() {
+  var created = profile && profile.created_at ? new Date(profile.created_at).getTime() : 0;
+  return subscribed() || (created > 0 && Date.now() - created < 30 * 86400000);
+}
+function setW(m) {
+  wMode = m;
+  $("wTabFeed").classList.toggle("on", m === "feed");
+  $("wTabPost").classList.toggle("on", m === "post");
+  $("wFeed").hidden = m !== "feed"; $("wPost").hidden = m !== "post";
+  $("vWatch").classList.toggle("tt", m === "feed");
+  say($("wMsg"), "");
+  if (m === "feed") loadFeed();
+  else { var ok = canPost(); $("wLock").hidden = ok; $("wForm").hidden = !ok; }
+}
+$("wTabFeed").onclick = function () { setW("feed"); };
+$("wTabPost").onclick = function () { setW("post"); };
+$("wAll").onclick = function () { wFilter = "all"; $("wAll").classList.add("on"); $("wFol").classList.remove("on"); loadFeed(); };
+$("wFol").onclick = function () { wFilter = "fol"; $("wFol").classList.add("on"); $("wAll").classList.remove("on"); loadFeed(); };
+$("wSub").onclick = function () {
+  foldOpen.plan = true; show("vMe", 4);
+  setTimeout(function () { $("planBox").scrollIntoView(); }, 300);
+};
+
+var justPosted = false, seenPosts = {};
+/* Comments sheet: read and write comments under a post */
+async function openComments(pid) {
+  var sh = document.createElement("div");
+  sh.className = "csheet";
+  sh.innerHTML = '<div class="cback" data-x></div><div class="cpanel"><div class="chead"><b>Comments</b><button type="button" class="linkbtn" data-x>Close</button></div>' +
+    '<div class="clist"></div><form class="cform"><input maxlength="300" placeholder="Say something about this work" autocomplete="off"><button class="btn small" type="submit">Post</button></form><div class="meta" data-cmsg></div></div>';
+  document.body.appendChild(sh);
+  var list = sh.querySelector(".clist"), msg = sh.querySelector("[data-cmsg]");
+  function close() { sh.remove(); loadFeed(); }
+  sh.querySelectorAll("[data-x]").forEach(function (x) { x.onclick = close; });
+  async function draw() {
+    var r = await sb.from("post_comments").select("id, body, author_id, created_at, profiles(name)").eq("post_id", pid).order("created_at", { ascending: true });
+    if (r.error) { list.innerHTML = ""; return say(msg, "Comments need supabase-engage.sql to be run first.", "err"); }
+    var rows = (r.data || []).filter(function (c) { return !blocked[c.author_id]; });
+    list.innerHTML = rows.length ? rows.map(function (c) {
+      return '<div class="crow"><div><b>' + esc((c.profiles && c.profiles.name) || "Someone") + '</b> ' + esc(c.body) + '<div class="meta">' + esc(new Date(c.created_at).toLocaleDateString()) + '</div></div>' +
+        (c.author_id === me.id ? '<button type="button" class="linkbtn" data-cdel="' + c.id + '">Delete</button>' : '') + '</div>';
+    }).join("") : '<div class="empty" style="padding:16px 0">No comments yet. Be the first.</div>';
+    list.querySelectorAll("[data-cdel]").forEach(function (b) {
+      b.onclick = async function () { var d = await sb.from("post_comments").delete().eq("id", Number(b.dataset.cdel)); if (d.error) return say(msg, nice(d.error), "err"); draw(); };
+    });
+  }
+  sh.querySelector("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var inp = sh.querySelector("input"), body = inp.value.trim();
+    if (!body) return;
+    var ins = await sb.from("post_comments").insert({ post_id: pid, body: body });
+    if (ins.error) return say(msg, nice(ins.error), "err");
+    inp.value = ""; say(msg, ""); draw();
+  });
+  draw();
+}
+async function loadFeed() {
+  var f = await sb.from("follows").select("following_id").eq("follower_id", me.id);
+  myFollows = {};
+  (f.data || []).forEach(function (x) { myFollows[x.following_id] = true; });
+  var q = sb.from("posts").select("*, profiles(name, occupation, city, tick, tick_free, plan, subscribed_until, verified, avatar_path)").order("created_at", { ascending: false }).limit(30);
+  if (wFilter === "fol") {
+    var ids = Object.keys(myFollows);
+    if (!ids.length) { $("feedList").innerHTML = '<div class="empty">You are not following anyone yet. Tap Everyone, then Follow.</div>'; return; }
+    q = q.in("author_id", ids);
+  }
+  var r = await q;
+  if (r.error) { $("feedList").innerHTML = ""; return say($("feedMsg"), nice(r.error), "err"); }
+  say($("feedMsg"), justPosted ? "Your post is live. It is the first one in For you." : "", justPosted ? "ok" : undefined);
+  if (justPosted) { justPosted = false; $("feedList").scrollTop = 0; }
+  var rows = (r.data || []).filter(function (p) { return !blocked[p.author_id]; });
+  if (!rows.length) { $("feedList").innerHTML = '<div class="empty">Nothing to watch yet. Tap + to post your work.</div>'; return; }
+  var lc = {}, lm = {};
+  var lk = await sb.from("post_likes").select("post_id, user_id").in("post_id", rows.map(function (p) { return p.id; }));
+  (lk.data || []).forEach(function (x) { lc[x.post_id] = (lc[x.post_id] || 0) + 1; if (x.user_id === me.id) lm[x.post_id] = true; });
+  var cm = {}, sv = {}, pids = rows.map(function (p) { return p.id; });
+  var cr = await sb.from("post_comments").select("id, post_id, body, author_id, created_at, profiles(name)").in("post_id", pids).order("created_at", { ascending: false });
+  (cr.data || []).forEach(function (x) { if (blocked[x.author_id]) return; (cm[x.post_id] = cm[x.post_id] || []).push(x); });
+  var sr = await sb.from("post_saves").select("post_id").eq("user_id", me.id).in("post_id", pids);
+  (sr.data || []).forEach(function (x) { sv[x.post_id] = true; });
+  $("feedList").innerHTML = rows.map(function (p) {
+    var url = sb.storage.from("posts").getPublicUrl(p.media_path).data.publicUrl;
+    var cs = cm[p.id] || [], tk = tickOf(p.profiles || {}), tcol = TICKS[tk] || "#1d6bff", ini = esc(((p.profiles && p.profiles.name) || "?").charAt(0).toUpperCase());
+    var av = p.profiles && p.profiles.avatar_path ? "background-image:url('" + esc(imgUrl("avatars", p.profiles.avatar_path)) + "')" : "";
+    var mine = p.author_id === me.id, pr = p.profiles || {};
+    var media = p.kind === "video"
+      ? '<video class="media" src="' + esc(url) + '" loop muted playsinline preload="metadata"></video>'
+      : '<img class="media" src="' + esc(url) + '" alt="" loading="lazy">';
+    if (p.sound_path) media += '<audio class="psound" preload="none" loop src="' + esc(imgUrl("sounds", p.sound_path)) + '"></audio>';
+    var fol = !!myFollows[p.author_id];
+    var lastTxt = cs.slice(0, 2).map(function (c) { return '<div class="lc"><b>' + esc((c.profiles && c.profiles.name) || "Someone") + '</b> ' + esc(c.body) + '</div>'; }).join("");
+    return '<article class="post" data-pid="' + p.id + '" data-mine="' + (mine ? "1" : "0") + '">' + media +
+      '<div class="side">' +
+      (mine ? '' :
+        '<div class="favwrap"><button class="favatar" type="button"' + (fol ? '' : ' data-follow="' + esc(p.author_id) + '"') + ' style="' + av + '" aria-label="' + (fol ? "Following" : "Follow") + '">' + (av ? "" : ini) + '</button>' +
+        (fol ? '' : '<span class="fplus" style="background:' + tcol + '">+</span>') + '</div>') +
+      (mine ? '<button class="sbtn" type="button" data-del="' + p.id + '" data-path="' + esc(p.media_path) + '" aria-label="Delete"><span>&#128465;</span><i>Delete</i></button>' : '') +
+      '<button class="sbtn like' + (lm[p.id] ? ' on' : '') + '" type="button" data-like="' + p.id + '" aria-label="Like"><span>' + (lm[p.id] ? "&#10084;" : "&#9825;") + '</span><i>' + (lc[p.id] || 0) + '</i></button>' +
+      '<button class="sbtn" type="button" data-comment="' + p.id + '" aria-label="Comments"><span>&#128172;</span><i>' + cs.length + '</i></button>' +
+      '<button class="sbtn' + (sv[p.id] ? ' on' : '') + '" type="button" data-save="' + p.id + '" aria-label="Save"><span>' + (sv[p.id] ? "&#128278;" : "&#128278;") + '</span><i>' + (sv[p.id] ? "Saved" : "Save") + '</i></button>' +
+      '<button class="sbtn" type="button" data-share="' + p.id + '" data-caption="' + esc(p.caption || "") + '" aria-label="Share"><span>&#10150;</span><i>Share</i></button>' +
+      (!mine ? '<button class="sbtn" type="button" data-rep="post" data-id="' + p.id + '" data-user="' + esc(p.author_id) + '" aria-label="Report"><span>&#9873;</span><i>Report</i></button>' : "") +
+      '</div>' +
+      '<div class="cap"><b>' + esc((p.profiles && p.profiles.name) || "Someone") + tickHtml(tk) + '</b>' +
+      '<div class="meta" style="color:#cfe0ff">' + esc((p.profiles && p.profiles.occupation) || "") + (p.profiles && p.profiles.city ? " · " + esc(p.profiles.city) : "") + '</div>' +
+      (p.sound_name ? '<div class="sndline">&#9835; ' + esc(p.sound_name) + '</div>' : "") +
+      (p.caption ? '<p>' + esc(p.caption) + '</p>' : "") +
+      lastTxt + (cs.length > 2 || cs.length ? '<button class="linkbtn" type="button" data-comment="' + p.id + '">' + (cs.length > 2 ? "View all " + cs.length + " comments" : (cs.length === 0 ? "" : "View comments")) + '</button>' : "") +
+      '</div></article>';
+  }).join("");
+  document.querySelectorAll("#feedList [data-comment]").forEach(function (b) { b.onclick = function () { openComments(Number(b.dataset.comment)); }; });
+  document.querySelectorAll("#feedList [data-save]").forEach(function (b) {
+    b.onclick = async function () {
+      var id = Number(b.dataset.save); b.disabled = true;
+      var u = sv[id] ? await sb.from("post_saves").delete().eq("post_id", id).eq("user_id", me.id) : await sb.from("post_saves").insert({ post_id: id });
+      if (u.error) { b.disabled = false; return say($("feedMsg"), "Saving needs supabase-engage.sql to be run first.", "err"); }
+      loadFeed();
+    };
+  });
+  document.querySelectorAll("#feedList [data-share]").forEach(function (b) {
+    b.onclick = async function () {
+      var text = "Watch this work on Rehoboth" + (b.dataset.caption ? ": " + b.dataset.caption : ""), url = location.href.split("#")[0];
+      try { if (navigator.share) return await navigator.share({ title: "Rehoboth", text: text, url: url }); } catch (e) { return; }
+      try { await navigator.clipboard.writeText(text + " " + url); say($("feedMsg"), "Link copied. Paste it anywhere to share.", "ok"); }
+      catch (e) { say($("feedMsg"), "Copy this link: " + url, "ok"); }
+    };
+  });
+  if (window.IntersectionObserver) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var pid = e.target.dataset.pid;
+        if (e.isIntersecting && pid && !seenPosts[pid] && e.target.dataset.mine !== "1") { seenPosts[pid] = true; sb.from("post_views").upsert({ post_id: Number(pid), viewer_id: me.id }, { onConflict: "post_id,viewer_id", ignoreDuplicates: true }); }
+        var v = e.target.querySelector("video"), au = e.target.querySelector("audio.psound");
+        if (au) { if (e.isIntersecting) { var ap = au.play(); if (ap && ap.catch) ap.catch(function () {}); } else au.pause(); }
+        if (!v) return; if (e.isIntersecting) { var pl = v.play(); if (pl && pl.catch) pl.catch(function () {}); } else v.pause();
+      });
+    }, { root: $("feedList"), threshold: 0.6 });
+    document.querySelectorAll("#feedList .post").forEach(function (a) { io.observe(a); });
+  }
+  document.querySelectorAll("#feedList video").forEach(function (v) { v.onclick = function () { v.muted = false; if (v.paused) v.play(); else v.pause(); }; });
+  document.querySelectorAll("#feedList [data-follow]").forEach(function (b) {
+    b.onclick = async function () {
+      b.disabled = true;
+      var id = b.dataset.follow;
+      var u = myFollows[id]
+        ? await sb.from("follows").delete().eq("follower_id", me.id).eq("following_id", id)
+        : await sb.from("follows").insert({ following_id: id });
+      if (u.error) { b.disabled = false; return say($("feedMsg"), nice(u.error), "err"); }
+      loadFeed();
+    };
+  });
+  document.querySelectorAll("#feedList [data-like]").forEach(function (b) {
+    b.onclick = async function () {
+      var id = Number(b.dataset.like); b.disabled = true;
+      var u = b.classList.contains("on") ? await sb.from("post_likes").delete().eq("post_id", id).eq("user_id", me.id) : await sb.from("post_likes").insert({ post_id: id });
+      if (u.error) { b.disabled = false; return say($("feedMsg"), "Likes need supabase-likes.sql to be run first.", "err"); }
+      loadFeed();
+    };
+  });
+  document.querySelectorAll("#feedList [data-del]").forEach(function (b) {
+    b.onclick = async function () {
+      if (!confirm("Delete this post?")) return;
+      b.disabled = true;
+      var u = await sb.from("posts").delete().eq("id", Number(b.dataset.del));
+      if (u.error) { b.disabled = false; return say($("feedMsg"), nice(u.error), "err"); }
+      await sb.storage.from("posts").remove([b.dataset.path]);
+      loadFeed();
+    };
+  });
+}
+
+function videoLength(file) {
+  return new Promise(function (res) {
+    var v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = function () { URL.revokeObjectURL(v.src); res(v.duration); };
+    v.onerror = function () { res(0); };
+    v.src = URL.createObjectURL(file);
+  });
+}
+/* Upload flow (like TikTok): 1) pick a photo or video, add a sound  2) describe it and post */
+var pickedSound = null, pickedUrl = null;
+function setPrev(box, file) {
+  if (pickedUrl) URL.revokeObjectURL(pickedUrl);
+  pickedUrl = URL.createObjectURL(file);
+  box.innerHTML = file.type.indexOf("video/") === 0
+    ? '<video src="' + pickedUrl + '" controls playsinline muted></video>'
+    : '<img src="' + pickedUrl + '" alt="">';
+}
+function paintSteps() {
+  var f = $("wFile").files[0];
+  $("wNext").disabled = !f; $("wSoundBtn").disabled = !f;
+  $("wSoundLine").textContent = pickedSound ? "♪ " + pickedSound.name + "  (tap Add sound to change)" : "No sound added. Add a sound to play behind your work.";
+}
+$("wFile").addEventListener("change", function () {
+  var f = this.files[0]; if (!f) return;
+  var isVideo = f.type.indexOf("video/") === 0, isPhoto = f.type.indexOf("image/") === 0;
+  if (!isVideo && !isPhoto) return say($("wMsg"), "Choose a photo or a video.", "err");
+  if (f.size > 25 * 1024 * 1024) { this.value = ""; return say($("wMsg"), "That file is over 25 MB. Choose a smaller one.", "err"); }
+  say($("wMsg"), "");
+  $("pickT").textContent = "Selected: " + f.name;
+  setPrev($("wPrev"), f); $("wPrev").hidden = false;
+  paintSteps();
+});
+$("wSoundBtn").onclick = function () { $("wSound").click(); };
+$("wSound").addEventListener("change", function () {
+  var f = this.files[0]; if (!f) return;
+  if (f.size > 10 * 1024 * 1024) { this.value = ""; return say($("wMsg"), "That sound is over 10 MB.", "err"); }
+  pickedSound = f; paintSteps();
+});
+$("wNext").onclick = async function () {
+  var f = $("wFile").files[0]; if (!f) return;
+  var isVideo = f.type.indexOf("video/") === 0;
+  if (isVideo && (await videoLength(f)) > 61) return say($("wMsg"), "Videos can be up to 60 seconds.", "err");
+  setPrev($("wPrev2"), f);
+  $("wSoundLine2").textContent = pickedSound ? "♪ " + pickedSound.name : "No sound";
+  $("wStep1").hidden = true; $("wStep2").hidden = false;
+};
+$("wBack").onclick = function () { $("wStep2").hidden = true; $("wStep1").hidden = false; };
+function resetUpload() {
+  $("wFile").value = ""; $("wSound").value = ""; $("wCap").value = ""; pickedSound = null;
+  $("pickT").textContent = "+ Select a photo or video"; $("wPrev").hidden = true; $("wPrev").innerHTML = "";
+  $("wStep2").hidden = true; $("wStep1").hidden = false; paintSteps();
+}
+$("wForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var file = $("wFile").files[0], btn = $("wBtn");
+  if (!canPost()) return say($("wMsg"), "Your free month is over. Subscribe to keep posting.", "err");
+  if (!file) return say($("wMsg"), "Choose a photo or a video first.", "err");
+  var isVideo = file.type.indexOf("video/") === 0;
+  btn.disabled = true; btn.textContent = "Uploading...";
+  var ext = ((file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5)) || "bin";
+  var path = me.id + "/" + Date.now() + "." + ext, sPath = null, sName = null;
+  var up = await sb.storage.from("posts").upload(path, file, { contentType: file.type, upsert: false });
+  if (up.error) { btn.disabled = false; btn.textContent = "Post"; return say($("wMsg"), nice(up.error), "err"); }
+  if (pickedSound) {
+    var sext = ((pickedSound.name.split(".").pop() || "mp3").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5)) || "mp3";
+    sPath = me.id + "/" + Date.now() + "." + sext; sName = pickedSound.name.slice(0, 80);
+    var su = await sb.storage.from("sounds").upload(sPath, pickedSound, { contentType: pickedSound.type || "audio/mpeg", upsert: false });
+    if (su.error) { await sb.storage.from("posts").remove([path]); btn.disabled = false; btn.textContent = "Post";
+      return say($("wMsg"), /Bucket not found/i.test(su.error.message || "") ? "Sound needs supabase-sound.sql to be run first." : nice(su.error), "err"); }
+  }
+  var ins = await sb.from("posts").insert({ kind: isVideo ? "video" : "photo", media_path: path, caption: $("wCap").value.trim() || null, sound_path: sPath, sound_name: sName });
+  btn.disabled = false; btn.textContent = "Post";
+  if (ins.error) { await sb.storage.from("posts").remove([path]); if (sPath) await sb.storage.from("sounds").remove([sPath]); return say($("wMsg"), nice(ins.error), "err"); }
+  resetUpload();
+  justPosted = true;
+  setW("feed");
+});
+
+/* Profile */
+function renderMe() {
+  if (!me) return;
+  var p = profile || {};
+  var roles = { worker: "Looking for work", hirer: "Hiring", both: "Work and hiring" };
+  var top = '<div class="note" style="text-align:center;padding:0;overflow:hidden"><div class="cover" style="' + (p.cover_path ? "background-image:url('" + esc(imgUrl("avatars", p.cover_path)) + "')" : "") + '"></div>' +
+    '<div class="avatar" style="' + (p.avatar_path ? "background-image:url('" + esc(imgUrl("avatars", p.avatar_path)) + "')" : "") + '">' + (p.avatar_path ? "" : esc((p.name || "?").charAt(0).toUpperCase())) + '</div>' +
+    '<div class="pbtns"><label>Profile photo<input id="avFile" type="file" accept="image/*"></label><label>Cover photo<input id="cvFile" type="file" accept="image/*"></label></div>' +
+    '<div id="picMsg" role="status" style="padding:0 14px"></div><div style="padding:10px 14px 14px"><h3 style="margin:0">' + esc(p.name || "") + tickHtml(tickOf(p)) + '</h3>' +
+    '<div class="meta" style="justify-content:center;margin-top:4px">' + esc(p.occupation || "Add what you do") + '</div>' +
+    (p.bio ? '<p style="margin:8px 0 0">' + esc(p.bio) + '</p>' : "") +
+    '<div class="stats"><div data-st="followers"><b id="stF">-</b><span>Followers</span></div><div data-st="following"><b id="stG">-</b><span>Following</span></div>' +
+    '<div><b id="stL">-</b><span>Likes</span></div><div data-st="stars"><b>&#9733; ' + Number(p.rating || 0).toFixed(1) + '</b><span>' + (p.stars_total || 0) + ' stars</span></div></div>' +
+    '<div id="peopleBox" class="meta" style="margin-top:10px;text-align:left"></div></div></div>';
+  var info = '' +
+    '<div class="kv"><span>Email</span><span>' + esc(me.email) + '</span></div>' +
+    '<div class="kv"><span>Phone</span><span>' + esc(phone || "Not added") + '</span></div>' +
+    '<div class="kv"><span>Role</span><span>' + esc(roles[p.role] || "") + '</span></div>' +
+    '<div class="kv"><span>Location</span><span>' + esc([p.area, p.city, p.country].filter(Boolean).join(", ")) + '</span></div>' +
+    '<div class="kv"><span>Rating</span><span>' + Number(p.rating || 0).toFixed(1) + ' · ' + (p.jobs_done || 0) + ' jobs done</span></div>' +
+    '<div class="kv"><span>Subscription</span><span class="pill ' + (subscribed() ? "ok" : "no") + '">' +
+    (subscribed() ? (planOf(p) ? planOf(p).name + " · " : "") + (new Date(p.subscribed_until).getFullYear() >= 2090 ? "For life" : "Active until " + new Date(p.subscribed_until).toLocaleDateString()) : "Not subscribed") + '</span></div>' +
+    '<div class="kv"><span>ID verification</span><span class="pill ' + (p.verified ? "ok" : "no") + '">' +
+    (p.verified ? "Verified" : "Not verified") + '</span></div>';
+  $("meBox").innerHTML = top +
+    '<div id="myPostsBox" style="margin-top:14px"></div>' +
+    '<div style="margin-top:14px">' + fold("personal", "Personal information", info) + '</div>';
+  wireFolds($("meBox"));
+  loadStats(); wireStats(); wirePics(); loadMyPosts();
+  renderEdit(); renderSettings(); renderPlans(); renderTick(); renderAdmin(); renderOwner();
+}
+
+function wirePics() {
+  [["avFile", "avatar_path", 600, "avatar"], ["cvFile", "cover_path", 1400, "cover"]].forEach(function (c) {
+    $(c[0]).onchange = async function () {
+      var f = this.files[0]; if (!f) return;
+      say($("picMsg"), "Uploading...");
+      var blob = await shrink(f, c[2]), path = me.id + "/" + c[3] + "-" + Date.now() + ".jpg", old = profile[c[1]];
+      var up = await sb.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg" });
+      if (up.error) return say($("picMsg"), /Bucket not found/i.test(up.error.message || "") ? "Pictures need supabase-media.sql to be run first." : nice(up.error), "err");
+      var u = await sb.from("profiles").update(JSON.parse('{"' + c[1] + '":"' + path + '"}')).eq("id", me.id);
+      if (u.error) return say($("picMsg"), nice(u.error), "err");
+      profile[c[1]] = path;
+      if (old) sb.storage.from("avatars").remove([old]);
+      renderMe();
+    };
+  });
+}
+/* Tap Followers, Following or Stars to see the people. Stars lists the ratings you received, highest first. */
+function wireStats() {
+  document.querySelectorAll("[data-st]").forEach(function (el) {
+    el.style.cursor = "pointer";
+    el.onclick = async function () {
+      var box = $("peopleBox"), kind = el.dataset.st;
+      if (box.dataset.open === kind) { box.innerHTML = ""; box.dataset.open = ""; return; }
+      box.dataset.open = kind; box.innerHTML = "Loading...";
+      if (kind === "stars") {
+        var r = await sb.from("reviews").select("rating, comment, reviewer_id").eq("worker_id", me.id).order("rating", { ascending: false }).limit(30);
+        var rows = r.data || [];
+        if (!rows.length) { box.innerHTML = "No ratings yet. When people you worked for rate you, they show here, highest first."; return; }
+        var pr = await sb.from("profiles").select("id, name").in("id", rows.map(function (x) { return x.reviewer_id; }));
+        var nm = {}; (pr.data || []).forEach(function (x) { nm[x.id] = x.name; });
+        box.innerHTML = rows.map(function (x) {
+          return '<div class="kv"><span>' + "&#9733;".repeat(x.rating) + " " + esc(nm[x.reviewer_id] || "Someone") + '</span><span>' + esc(x.comment || "") + '</span></div>';
+        }).join("");
+        return;
+      }
+      var q = kind === "followers" ? sb.from("follows").select("follower_id").eq("following_id", me.id) : sb.from("follows").select("following_id").eq("follower_id", me.id);
+      var f = await q, ids = (f.data || []).map(function (x) { return kind === "followers" ? x.follower_id : x.following_id; });
+      if (!ids.length) { box.innerHTML = kind === "followers" ? "Nobody follows you yet." : "You are not following anyone yet."; return; }
+      var pp = await sb.from("profiles").select("name, occupation, tick, tick_free, plan, subscribed_until").in("id", ids);
+      box.innerHTML = (pp.data || []).map(function (x) {
+        return '<div class="kv"><span>' + esc(x.name || "Someone") + tickHtml(tickOf(x)) + '</span><span>' + esc(x.occupation || "") + '</span></div>';
+      }).join("");
+    };
+  });
+}
+/* All my posts on my profile. Tap one to open it, and delete it from there. */
+async function loadMyPosts() {
+  var box = $("myPostsBox"); if (!box) return;
+  var r = await sb.from("posts").select("id, kind, media_path, caption, created_at").eq("author_id", me.id).order("created_at", { ascending: false }).limit(200);
+  if (r.error) { box.innerHTML = ""; return; }
+  var rows = r.data || [];
+  myViewers = {};
+  if (rows.length) {
+    var vv = await sb.from("post_views").select("post_id, viewer_id, created_at").in("post_id", rows.map(function (p) { return p.id; })).order("created_at", { ascending: false });
+    var vids = [];
+    (vv.data || []).forEach(function (x) { (myViewers[x.post_id] = myViewers[x.post_id] || []).push(x); vids.push(x.viewer_id); });
+    var names = {};
+    if (vids.length) { var pn = await sb.from("profiles").select("id, name").in("id", vids.filter(function (v, i, a) { return a.indexOf(v) === i; })); (pn.data || []).forEach(function (x) { names[x.id] = x.name; }); }
+    rows.forEach(function (p) { (myViewers[p.id] || []).forEach(function (x) { x.name = names[x.viewer_id] || "Someone"; }); });
+  }
+  myRows = rows;
+  if (!rows.length) { box.innerHTML = '<div class="note"><p class="meta" style="margin:0">Your posts will show here. Post your work from Watch (the play icon, then Post).</p></div>'; return; }
+  box.innerHTML = '<h3 style="margin:0 0 8px">My posts (' + rows.length + ')</h3><div class="pgrid">' + rows.map(function (p) {
+    var url = imgUrl("posts", p.media_path);
+    var n = (myViewers[p.id] || []).length;
+    return '<button type="button" class="ptile" data-pid="' + p.id + '" aria-label="Open post">' +
+      (p.kind === "video" ? '<video src="' + esc(url) + '" muted playsinline preload="metadata"></video><span class="play">&#9654;</span>' : '<img src="' + esc(url) + '" alt="" loading="lazy">') +
+      '<span class="vcount">&#128065; ' + n + '</span></button>';
+  }).join("") + '</div>';
+  document.querySelectorAll("#myPostsBox [data-pid]").forEach(function (b) {
+    b.onclick = function () {
+      var idx = rows.findIndex(function (x) { return x.id === Number(b.dataset.pid); });
+      if (idx > -1) openMyFeed(idx);
+    };
+  });
+}
+/* TikTok-style viewer for my posts: swipe up for the next one. Under each post: views and who watched. */
+var myRows = [], myViewers = {};
+function openMyFeed(start) {
+  var f = document.createElement("div");
+  f.className = "pfeed";
+  f.innerHTML = '<button type="button" class="pclose" data-close aria-label="Close">&times;</button><div class="pslides">' + myRows.map(function (p) {
+    var url = imgUrl("posts", p.media_path), vs = myViewers[p.id] || [];
+    return '<section class="pslide" data-id="' + p.id + '">' +
+      (p.kind === "video" ? '<video src="' + esc(url) + '" controls loop playsinline></video>' : '<img src="' + esc(url) + '" alt="">') +
+      '<div class="pinfo">' + (p.caption ? '<p>' + esc(p.caption) + '</p>' : '') +
+      '<div class="meta" style="color:#cfe0ff">&#128065; ' + vs.length + ' view' + (vs.length === 1 ? '' : 's') + '</div>' +
+      (vs.length ? '<details class="vlist"><summary>See who watched</summary>' + vs.map(function (x) {
+        return '<div class="vrow">' + esc(x.name || "Someone") + ' <span>' + esc(new Date(x.created_at).toLocaleDateString()) + '</span></div>';
+      }).join("") + '</details>' : '<div class="meta" style="color:#cfe0ff">No one has watched this yet.</div>') +
+      '<div class="row2"><button class="btn small ghost" type="button" data-pdel>Delete post</button></div><div class="meta" data-pmsg></div></div></section>';
+  }).join("") + '</div>';
+  document.body.appendChild(f);
+  var slides = f.querySelector(".pslides");
+  f.querySelector("[data-close]").onclick = function () { f.remove(); };
+  setTimeout(function () { var t = slides.children[start]; if (t) slides.scrollTop = t.offsetTop; }, 0);
+  slides.querySelectorAll("[data-pdel]").forEach(function (btn) {
+    btn.onclick = async function () {
+      var sec = btn.closest(".pslide"), id = Number(sec.dataset.id), p = myRows.filter(function (x) { return x.id === id; })[0];
+      if (!p || !confirm("Delete this post?")) return;
+      var d = await sb.from("posts").delete().eq("id", id);
+      if (d.error) return say(sec.querySelector("[data-pmsg]"), nice(d.error), "err");
+      await sb.storage.from("posts").remove([p.media_path]);
+      f.remove(); loadMyPosts();
+    };
+  });
+}
+async function loadStats() {
+  var f1 = await sb.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", me.id);
+  var f2 = await sb.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", me.id);
+  var mine = await sb.from("posts").select("id").eq("author_id", me.id);
+  var likes = 0, ids = (mine.data || []).map(function (x) { return x.id; });
+  if (ids.length) { var l = await sb.from("post_likes").select("post_id", { count: "exact", head: true }).in("post_id", ids); likes = l.count || 0; }
+  if ($("stF")) { $("stF").textContent = f1.count || 0; $("stG").textContent = f2.count || 0; $("stL").textContent = likes; }
+}
+/* Edit what I do for a living and a short bio (no phone number or email allowed in the bio) */
+function renderEdit() {
+  var p = profile || {};
+  $("editBox").innerHTML = fold("edit", "Edit my work and bio",
+    '<label for="eJob">What do you do for a living? (everyone can see it)</label><input id="eJob" list="cats" autocomplete="off" value="' + esc(p.occupation || "") + '">' +
+    '<label for="eBio">Short bio (200 characters, no phone number or email)</label><textarea id="eBio" rows="3" maxlength="200">' + esc(p.bio || "") + '</textarea>' +
+    '<button id="eSave" class="btn small" type="button" style="margin-top:10px">Save</button><div id="eMsg" role="status"></div>');
+  wireFolds($("editBox"));
+  $("eSave").onclick = async function () {
+    var job = $("eJob").value.trim(), bio = $("eBio").value.trim();
+    if (!job) return say($("eMsg"), "Write what you do for a living.", "err");
+    var u = await sb.from("profiles").update({ occupation: job, bio: bio || null }).eq("id", me.id);
+    if (u.error) return say($("eMsg"), /profiles_bio_check/.test(u.error.message || "") ? "The bio cannot include a phone number or email, and must be 200 characters or fewer." : nice(u.error), "err");
+    profile.occupation = job; profile.bio = bio || null;
+    say($("eMsg"), "Saved.", "ok");
+  };
+}
+
+
+/* Deal rules. Each rule is shown only to the person who pays it, and only where they are dealing with it. */
+var RULES = {
+  work:         { name: "Short-term work", who: "You pay this", rule: "5% of the agreed amount, per deal." },
+  longPersonal: { name: "Long-term personal work", who: "You pay this", rule: "5% of the amount you receive." },
+  longCompany:  { name: "Long-term company work", who: "Paid by the company, on top of the worker's pay", rule: "0.90% of the worker's pay for each day worked. Charged once at month end, in the same payment as the worker's pay." },
+  sale:         { name: "Selling an item", who: "You pay this", rule: "5% of the sale price." },
+  buy:          { name: "Buying an item", who: "You pay this", rule: "5% of the purchase price." },
+  ad:           { name: "Running an ad", who: "You pay this", rule: "$0.99 per ad, flat. No commission on the sale." }
+};
+function ruleBlock(key) {
+  var r = RULES[key];
+  return '<div class="kv" style="display:block"><b>' + esc(r.name) + '</b><p class="meta" style="margin:2px 0 0">' + esc(r.who) + '</p><p style="margin:4px 0 0">' + esc(r.rule) + '</p></div>';
+}
+/* Subscription levels screen (payments are connected later). Shows only the rules for this person's role. */
+function renderPlans() {
+  var p = profile || {}, used = Math.min(3, p.free_deals_used || 0), left = Math.max(0, 3 - used), paid = p.paid_deals || 0;
+  var roleKeys = [];
+  if (p.role === "worker" || p.role === "both" || !p.role) roleKeys.push("work", "longPersonal");
+  if (p.role === "hirer" || p.role === "both" || !p.role) roleKeys.push("longCompany");
+  var inner = '<p style="margin:0 0 8px"><b>Free deals left: ' + left + ' of 3</b></p>' +
+    '<p class="meta" style="margin:0 0 8px">Each person gets 3 free deals. A deal is when a hire, buy or work request is accepted.</p>' +
+    (paid > 0 ? '<p class="meta" style="margin:0 0 8px">Paid deals ready: ' + paid + '</p>' : '') +
+    '<p class="meta" style="margin:0 0 8px">Your rules, shown for the deals you take part in:</p>' +
+    roleKeys.map(ruleBlock).join("") +
+    '<p class="meta" style="margin:8px 0 0">Buying, selling and ads have their own rules, shown when you post or buy. Payment is not connected yet, so for now you can keep taking deals.</p>';
+  $("planBox").innerHTML = fold("plan", "Deals and commission", inner);
+  wireFolds($("planBox"));
+}
+
+/* The tick: ID and selfie checked by hand, plus jobs, stars and subscription */
+async function renderTick() {
+  var p = profile || {}, box = $("tickBox");
+  if (p.tick_free) { box.innerHTML = fold("tick", "Verified" + tickHtml(p.tick), '<p class="meta">Your tick ' + tickHtml(p.tick) + ' is free for life.</p>'); wireFolds(box); return; }
+  var rq = await sb.from("id_requests").select("*").eq("user_id", me.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (rq.error) { box.innerHTML = ""; return; }
+  var steps = [
+    [p.verified, "ID and selfie approved"],
+    [subscribed(), "Active subscription"]
+  ];
+  var last = rq.data, form = "";
+  if (!p.verified) {
+    if (last && last.status === "pending") form = '<p class="meta">Your ID and selfie are being checked. We will update this page.</p>';
+    else form = (last && last.status === "rejected" ? '<div class="msg err">Not accepted' + (last.note ? ": " + esc(last.note) : "") + '. Send new photos.</div>' : "") +
+      '<label for="idFile">Photo of your ID (clear, all four corners)</label><input id="idFile" type="file" accept="image/*">' +
+      '<label for="selfieFile">A selfie of your face</label><input id="selfieFile" type="file" accept="image/*" capture="user">' +
+      '<button id="idSend" class="btn" type="button">Send for checking</button><div id="idMsg" role="status"></div>';
+  }
+  box.innerHTML = fold("tick", "Verified" + tickHtml(tickOf(p) || "muted"),
+    steps.map(function (s) { return '<div class="kv"><span>' + esc(s[1]) + '</span><span class="pill ' + (s[0] ? "ok" : "no") + '">' + (s[0] ? "Done" : "Not yet") + '</span></div>'; }).join("") +
+    '<div style="margin-top:8px">' + form + '</div>');
+  wireFolds(box);
+  if ($("idSend")) $("idSend").onclick = sendId;
+}
+async function sendId() {
+  var a = $("idFile").files[0], s = $("selfieFile").files[0], msg = $("idMsg"), btn = $("idSend");
+  if (!a || !s) return say(msg, "Add both photos first.", "err");
+  if (a.type.indexOf("image/") !== 0 || s.type.indexOf("image/") !== 0) return say(msg, "Both files must be pictures.", "err");
+  if (a.size > 10485760 || s.size > 10485760) return say(msg, "Each picture must be under 10 MB.", "err");
+  btn.disabled = true; btn.textContent = "Sending...";
+  var t = Date.now(), pa = me.id + "/id-" + t + ".jpg", ps = me.id + "/selfie-" + t + ".jpg";
+  var u1 = await sb.storage.from("ids").upload(pa, a, { contentType: a.type });
+  var u2 = u1.error ? u1 : await sb.storage.from("ids").upload(ps, s, { contentType: s.type });
+  if (u1.error || u2.error) { btn.disabled = false; btn.textContent = "Send for checking"; return say(msg, nice(u1.error || u2.error), "err"); }
+  var r = await sb.from("id_requests").insert({ id_path: pa, selfie_path: ps });
+  if (r.error) { await sb.storage.from("ids").remove([pa, ps]); btn.disabled = false; btn.textContent = "Send for checking"; return say(msg, nice(r.error), "err"); }
+  renderTick();
+}
+
+/* Admin only: approve or reject ID requests by hand. Photos are deleted after each decision. */
+async function renderAdmin() {
+  var box = $("adminBox");
+  var ad = await sb.from("admins").select("user_id").eq("user_id", me.id).maybeSingle();
+  if (ad.error || !ad.data) { box.innerHTML = ""; return; }
+  var r = await sb.from("id_requests").select("*, profiles(name, occupation, city)").eq("status", "pending").order("created_at").limit(20);
+  if (r.error) { box.innerHTML = ""; return; }
+  var rows = r.data || [];
+  if (!rows.length) { box.innerHTML = '<h2 style="margin-top:22px">ID checks</h2><div class="empty">No IDs waiting.</div>'; return; }
+  var urls = await Promise.all(rows.map(async function (x) {
+    var i = await sb.storage.from("ids").createSignedUrl(x.id_path, 300), s = await sb.storage.from("ids").createSignedUrl(x.selfie_path, 300);
+    return { id: i.data && i.data.signedUrl, selfie: s.data && s.data.signedUrl };
+  }));
+  box.innerHTML = '<h2 style="margin-top:22px">ID checks (' + rows.length + ')</h2>' + rows.map(function (x, k) {
+    var pr = x.profiles || {};
+    return '<article class="post"><b>' + esc(pr.name || "Unknown") + '</b><div class="meta">' + esc([pr.occupation, pr.city].filter(Boolean).join(" · ")) + '</div>' +
+      '<p class="meta" style="margin-top:8px">ID</p><img class="media" style="max-height:40vh" src="' + esc(urls[k].id || "") + '" alt="">' +
+      '<p class="meta" style="margin-top:8px">Selfie</p><img class="media" style="max-height:40vh" src="' + esc(urls[k].selfie || "") + '" alt="">' +
+      '<div class="row2"><button class="btn small" type="button" data-rq="' + x.id + '" data-to="approved">Approve</button>' +
+      '<button class="btn small ghost" type="button" data-rq="' + x.id + '" data-to="rejected">Reject</button></div></article>';
+  }).join("");
+  box.querySelectorAll("[data-rq]").forEach(function (b) {
+    b.onclick = async function () {
+      var x = rows.filter(function (q) { return q.id === Number(b.dataset.rq); })[0], note = null;
+      if (b.dataset.to === "rejected") { note = prompt("Tell the person why (they will see this):"); if (note === null) return; }
+      b.disabled = true;
+      var u = await sb.from("id_requests").update({ status: b.dataset.to, note: note || null, reviewed_at: new Date().toISOString() }).eq("id", x.id);
+      if (u.error) { b.disabled = false; return alert(nice(u.error)); }
+      await sb.storage.from("ids").remove([x.id_path, x.selfie_path]);
+      renderAdmin();
+    };
+  });
+}
+/* Theme: System (default), Light or Dark. Stored on this device only. */
+var THEME_KEY = "rehoboth-theme";
+function getTheme() { try { return localStorage.getItem(THEME_KEY) || "system"; } catch (e) { return "system"; } }
+function setTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch (e) {} }
+function applyTheme(t) {
+  if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+applyTheme(getTheme());
+
+/* Settings: name, username, phone, email, password, theme, language */
+function renderSettings() {
+  var p = profile || {}, th = getTheme();
+  $("setBox").innerHTML = fold("settings", "Settings",
+    '<label for="sName">Full name</label><input id="sName" maxlength="60" value="' + esc(p.name || "") + '">' +
+    '<label for="sUser">Username (3 to 24 letters, numbers or underscores)</label><input id="sUser" maxlength="24" autocomplete="off" value="' + esc(p.username || "") + '" placeholder="kofi_electric">' +
+    '<button id="sSaveName" class="btn small" type="button" style="margin-top:10px">Save name and username</button><div id="sNameMsg" role="status"></div>' +
+    '<label for="sPhone">Phone number with country code</label><input id="sPhone" type="tel" inputmode="tel" value="' + esc(phone || "") + '">' +
+    '<button id="sSavePhone" class="btn small" type="button" style="margin-top:10px">Save phone</button><div id="sPhoneMsg" role="status"></div>' +
+    '<label for="sEmail">Email</label><input id="sEmail" type="email" inputmode="email" value="' + esc(me.email || "") + '">' +
+    '<button id="sSaveEmail" class="btn small" type="button" style="margin-top:10px">Change email</button><div id="sEmailMsg" role="status"></div>' +
+    '<label for="sPw">New password (6 or more characters)</label><input id="sPw" type="password" autocomplete="new-password">' +
+    '<button id="sSavePw" class="btn small" type="button" style="margin-top:10px">Change password</button><div id="sPwMsg" role="status"></div>' +
+    '<label for="sTheme">Theme</label><select id="sTheme">' +
+      '<option value="system"' + (th === "system" ? " selected" : "") + '>System (follows your phone)</option>' +
+      '<option value="light"' + (th === "light" ? " selected" : "") + '>Light</option>' +
+      '<option value="dark"' + (th === "dark" ? " selected" : "") + '>Dark</option></select>' +
+    '<label for="sLang">Language</label><select id="sLang">' +
+      '<option value="en"' + (curLang() === "en" ? " selected" : "") + '>English</option>' +
+      '<option value="fr"' + (curLang() === "fr" ? " selected" : "") + '>Français</option>' +
+      '<option value="ar"' + (curLang() === "ar" ? " selected" : "") + '>العربية</option></select>' +
+    '<p class="meta" style="margin:4px 0 0">Some text is still in English. More is translated over time.</p>' +
+    '<label for="sCur">Currency for your deals</label><select id="sCur">' +
+      CURRENCIES.map(function (c) { return '<option' + (c === curCode() ? " selected" : "") + '>' + c + '</option>'; }).join("") + '</select>' +
+    '<button id="sSaveCur" class="btn small" type="button" style="margin-top:10px">Save currency</button><div id="sCurMsg" role="status"></div>' +
+    fold("legal", "Terms and privacy",
+      '<p class="meta" style="margin:0 0 8px"><b>Draft. A lawyer must review this before the app is released.</b></p>' +
+      '<h3 style="margin:8px 0 4px;font-size:15px">What we collect</h3>' +
+      '<p class="meta" style="margin:0">Your name, username, phone number and email. The photos, videos and captions you post. Your messages. Your city, and your live location only while you choose to go live. Payment details are handled by our payment provider, not stored in this app.</p>' +
+      '<h3 style="margin:8px 0 4px;font-size:15px">Who can see what</h3>' +
+      '<p class="meta" style="margin:0">Other people see your name, username, posts, rating and tick. They see your location only while you are live. Your phone and email are never shown to other people.</p>' +
+      '<h3 style="margin:8px 0 4px;font-size:15px">Deals and rules</h3>' +
+      '<p class="meta" style="margin:0">Each deal shows its rule to the person who pays it before the deal starts. Read the rule before you agree.</p>' +
+      '<h3 style="margin:8px 0 4px;font-size:15px">Your choices</h3>' +
+      '<p class="meta" style="margin:0">You can change your details in Settings, and delete your account by contacting [support contact to be added before launch].</p>') );
+  wireFolds($("setBox"));
+
+  $("sSaveName").onclick = async function () {
+    var name = $("sName").value.trim(), user = $("sUser").value.trim().toLowerCase();
+    if (!name) return say($("sNameMsg"), "Write your name.", "err");
+    if (user && !/^[a-z0-9_]{3,24}$/.test(user)) return say($("sNameMsg"), "Username: 3 to 24 letters, numbers or underscores.", "err");
+    var u = await sb.from("profiles").update({ name: name, username: user || null }).eq("id", me.id);
+    if (u.error) {
+      var m = u.error.message || "";
+      return say($("sNameMsg"), /duplicate|unique/i.test(m) ? "That username is taken. Try another." : /username/i.test(m) ? "Run supabase-updates.sql first." : nice(u.error), "err");
+    }
+    profile.name = name; profile.username = user || null;
+    say($("sNameMsg"), "Saved.", "ok");
+  };
+  $("sSavePhone").onclick = async function () {
+    var v = $("sPhone").value.trim().replace(/[\s().-]/g, "");
+    if (!/^\+[1-9][0-9]{7,14}$/.test(v)) return say($("sPhoneMsg"), "Start your number with the country code, for example +233 24 123 4567.", "err");
+    var u = await sb.from("contacts").upsert({ id: me.id, phone: v });
+    if (u.error) return say($("sPhoneMsg"), nice(u.error), "err");
+    phone = v; say($("sPhoneMsg"), "Saved.", "ok");
+  };
+  $("sSaveEmail").onclick = async function () {
+    var v = $("sEmail").value.trim();
+    if (!v) return say($("sEmailMsg"), "Write your email.", "err");
+    var u = await sb.auth.updateUser({ email: v });
+    if (u.error) return say($("sEmailMsg"), nice(u.error), "err");
+    say($("sEmailMsg"), "We sent a confirm link to your new email. Tap it to finish the change.", "ok");
+  };
+  $("sSavePw").onclick = async function () {
+    var v = $("sPw").value;
+    if (v.length < 6) return say($("sPwMsg"), "Use 6 or more characters.", "err");
+    var u = await sb.auth.updateUser({ password: v });
+    if (u.error) return say($("sPwMsg"), nice(u.error), "err");
+    $("sPw").value = ""; say($("sPwMsg"), "Password changed.", "ok");
+  };
+  $("sTheme").onchange = function () { setTheme(this.value); applyTheme(this.value); };
+  $("sLang").onchange = function () { setLang(this.value); renderSettings(); };
+  $("sSaveCur").onclick = async function () {
+    var c = $("sCur").value;
+    var u = await sb.from("profiles").update({ currency: c }).eq("id", me.id);
+    if (u.error) return say($("sCurMsg"), nice(u.error), "err");
+    profile.currency = c; applyLang(); say($("sCurMsg"), "Saved. Amounts now show " + c + ".", "ok");
+  };
+}
+
+/* Watch search: people (name or username) and posts (caption) */
+var wsTimer = null;
+$("wSearch").addEventListener("input", function () { clearTimeout(wsTimer); wsTimer = setTimeout(runWSearch, 300); });
+async function runWSearch() {
+  var q = $("wSearch").value.trim().replace(/[*,()]/g, " "), out = $("wSearchOut");
+  if (!q) { out.hidden = true; out.innerHTML = ""; return; }
+  out.hidden = false; out.innerHTML = '<p class="meta">Searching...</p>';
+  var people = await sb.from("profiles").select("id, name, username, occupation, tick, tick_free, plan, subscribed_until, verified")
+    .or("name.ilike.*" + q + "*,username.ilike.*" + q + "*").limit(15);
+  if (people.error) people = await sb.from("profiles").select("id, name, occupation, tick, tick_free, plan, subscribed_until, verified").ilike("name", "*" + q + "*").limit(15);
+  var posts = await sb.from("posts").select("id, caption, profiles(name)").ilike("caption", "*" + q + "*").order("created_at", { ascending: false }).limit(15);
+  var pRows = people.data || [], oRows = posts.data || [];
+  out.innerHTML = '<h3 style="margin:0 0 6px;font-size:16px">People</h3>' +
+    (pRows.length ? pRows.map(function (x) {
+      return '<div class="kv"><span>' + esc(x.name || "Someone") + tickHtml(tickOf(x)) + (x.username ? ' <span class="meta">@' + esc(x.username) + '</span>' : '') + '</span><span>' + esc(x.occupation || "") + '</span></div>';
+    }).join("") : '<p class="meta">No people found.</p>') +
+    '<h3 style="margin:12px 0 6px;font-size:16px">Posts</h3>' +
+    (oRows.length ? oRows.map(function (x) {
+      return '<div class="kv"><span>' + esc(x.caption || "(no caption)") + '</span><span>' + esc((x.profiles && x.profiles.name) || "") + '</span></div>';
+    }).join("") : '<p class="meta">No posts found.</p>');
+}
+
+/* Visits: one row per person every 10 minutes, so the owner can see who is active */
+function logVisit() {
+  if (!me) return;
+  try {
+    var last = Number(localStorage.getItem("rh-visit")) || 0;
+    if (Date.now() - last < 600000) return;
+    localStorage.setItem("rh-visit", String(Date.now()));
+  } catch (e) {}
+  sb.from("app_visits").insert({ user_id: me.id });
+}
+/* Time in app: every minute the app is open and visible, add 60 seconds for this person */
+setInterval(function () {
+  if (me && !document.hidden) sb.rpc("add_app_time", { sec: 60 });
+}, 60000);
+
+/* Growth: workers online now, and the best work this week in your country */
+async function loadGrowth() {
+  if (!me || !profile || !profile.country) return;
+  var o = await sb.rpc("online_count");
+  if (!o.error) $("onlineNow").textContent = (o.data > 0) ? (o.data + (o.data === 1 ? " worker" : " workers") + " online near you now") : "Workers show here when they go live.";
+  var b = await sb.rpc("best_work_week");
+  var box = $("bestBox");
+  if (b.error || !b.data || !b.data.length) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = '<h3 style="margin:0 0 6px;font-size:16px">Best work this week</h3>' +
+    '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">' + b.data.map(function (x) {
+      var thumb = (x.kind === "photo" && x.media_path) ? "background-image:url('" + esc(imgUrl("posts", x.media_path)) + "');background-size:cover;background-position:center" : "background:var(--card)";
+      return '<div style="flex:0 0 130px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)">' +
+        '<div style="height:110px;' + thumb + ';display:flex;align-items:flex-end;justify-content:flex-end;padding:4px;font-size:12px">' + (x.kind === "video" ? "Video" : "") + '</div>' +
+        '<div style="padding:6px"><b style="font-size:13px">' + esc(x.name || "Worker") + '</b><div class="meta">' + Number(x.views) + ' views</div></div></div>';
+    }).join("") + '</div>';
+}
+setInterval(function () { if (me && !document.hidden) loadGrowth(); }, 120000);
+
+/* Owner dashboard: only shown to the owner account */
+async function renderOwner() {
+  var box = $("ownerBox"); if (!box) return;
+  var ad = await sb.from("admins").select("user_id").eq("user_id", me.id).maybeSingle();
+  if (ad.error || !ad.data) { box.innerHTML = ""; return; }
+  var r = await sb.rpc("owner_stats");
+  var tm = await sb.rpc("owner_time");
+  var tmd = (!tm.error && tm.data) ? tm.data : { hours: {}, people: {} };
+  if (r.error) { box.innerHTML = '<h2 style="margin-top:22px">Owner dashboard</h2><div class="msg err">' + esc(nice(r.error)) + ' Run supabase-updates.sql first.</div>'; return; }
+  var s = r.data || {}, per = "day";
+  var g = function (k) { return (s[k] && s[k][per]) || 0; };
+  function paint() {
+    var dv = Number(g("deal_value")), rows = [
+      ["New people", g("signups")], ["Active people", g("active_users")], ["Watch views", g("watch_views")],
+      ["Deals", g("deals")], ["Deal value", dv.toLocaleString()], ["Estimated commission (5%)", (dv * 0.05).toLocaleString(undefined, { maximumFractionDigits: 2 })],
+      ["Hours in app", (tmd.hours || {})[per] || 0], ["People who opened the app", (tmd.people || {})[per] || 0]
+    ];
+    var growth = s.growth || [], top = Math.max(1, Math.max.apply(null, growth.map(function (x) { return x.signups; }).concat([1])));
+    var bars = growth.map(function (x) {
+      return '<div title="' + esc(x.day) + ': ' + x.signups + '" style="flex:1;background:var(--grad);border-radius:3px 3px 0 0;height:' + Math.max(2, Math.round(x.signups / top * 100)) + '%"></div>';
+    }).join("");
+    $("ownBody").innerHTML =
+      '<p class="meta" style="margin:0 0 6px">For the period you pick:</p>' +
+      rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><span><b>' + esc(x[1]) + '</b></span></div>'; }).join("") +
+      '<h3 style="margin:14px 0 6px;font-size:16px">All time</h3>' +
+      '<div class="kv"><span>People</span><span><b>' + (s.users_total || 0) + '</b></span></div>' +
+      '<div class="kv"><span>Workers</span><span><b>' + (s.workers || 0) + '</b></span></div>' +
+      '<div class="kv"><span>Hirers (buyers)</span><span><b>' + (s.hirers || 0) + '</b></span></div>' +
+      '<div class="kv"><span>Sellers</span><span><b>' + (s.sellers || 0) + '</b></span></div>' +
+      '<div class="kv"><span>Posts in Watch</span><span><b>' + (s.posts_total || 0) + '</b></span></div>' +
+      '<h3 style="margin:14px 0 6px;font-size:16px">Active subscriptions (ticks)</h3>' +
+      '<div class="kv"><span>' + tickHtml("green") + ' Green</span><span><b>' + ((s.ticks || {}).green || 0) + '</b></span></div>' +
+      '<div class="kv"><span>' + tickHtml("black") + ' Black</span><span><b>' + ((s.ticks || {}).black || 0) + '</b></span></div>' +
+      '<div class="kv"><span>' + tickHtml("gold") + ' Gold</span><span><b>' + ((s.ticks || {}).gold || 0) + '</b></span></div>' +
+      '<h3 style="margin:14px 0 6px;font-size:16px">New people, last 30 days</h3>' +
+      '<div style="display:flex;align-items:flex-end;gap:2px;height:90px">' + bars + '</div>' +
+      '<p class="meta" style="margin:10px 0 0">Commission shown is an estimate at 5% of deal value. Exact commission will come with payments. Time in app counts while the app is open on a phone or computer.</p>';
+  }
+  box.innerHTML = '<h2 style="margin-top:22px">Owner dashboard</h2>' +
+    '<div class="seg" id="ownPer"><button type="button" data-p="day" class="on">Day</button><button type="button" data-p="week">Week</button><button type="button" data-p="month">Month</button><button type="button" data-p="year">Year</button></div>' +
+    '<div id="ownBody"></div>';
+  box.querySelectorAll("#ownPer button").forEach(function (b) {
+    b.onclick = function () {
+      per = b.dataset.p;
+      box.querySelectorAll("#ownPer button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      g = function (k) { return (s[k] && s[k][per]) || 0; };
+      paint();
+    };
+  });
+  paint();
+}
+
+/* Agreement: before a deal is sent or accepted, the person sees the rule for this deal and an example, then agrees or cancels.
+   Nothing is charged here; payment is connected later. */
+function curCode() { return (profile && profile.currency) || "USD"; }
+function money(n) { return curCode() + " " + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+
+/* Map pick for buying and selling: tap the place, and the city is filled in */
+var bPick = null, bMap = null;
+$("bMapBtn").onclick = function () {
+  var box = $("bMapBox"); box.hidden = false;
+  if (!window.L) { $("bPlace").textContent = "Map is not available right now."; return; }
+  if (!bMap) {
+    bMap = L.map(box).setView([0, 0], 2);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(bMap);
+    bMap.on("click", function (e) {
+      bPick = { lat: e.latlng.lat, lng: e.latlng.lng };
+      if (bMap._pin) bMap._pin.remove();
+      bMap._pin = L.marker([bPick.lat, bPick.lng]).addTo(bMap);
+      $("bPlace").textContent = "Place set.";
+      fetch("https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=" + bPick.lat + "&lon=" + bPick.lng, { headers: { "Accept-Language": curLang() } })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var a = j.address || {}, c = a.city || a.town || a.village || a.county || a.state || "";
+          if (c) { $("bPlace").textContent = "Place set: " + c; if (!$("bCity").value) $("bCity").value = c; }
+        }).catch(function () {});
+    });
+    navigator.geolocation && navigator.geolocation.getCurrentPosition(function (pos) {
+      bMap.setView([pos.coords.latitude, pos.coords.longitude], 13);
+    }, function () {}, { timeout: 5000 });
+  }
+  setTimeout(function () { bMap.invalidateSize(); }, 50);
+};
+
+/* Language: English, French and Arabic. Arabic reads right to left. Text not yet translated stays in English. */
+var I18N = {
+  en: { "nav.home": "Home", "nav.watch": "Watch", "nav.jobs": "My jobs", "nav.alerts": "Alerts", "nav.profile": "Profile",
+        call: "Call", video: "Video", mute: "Mute", hangup: "Hang up", accept: "Accept", decline: "Decline" },
+  fr: { "nav.home": "Accueil", "nav.watch": "Regarder", "nav.jobs": "Mes travaux", "nav.alerts": "Alertes", "nav.profile": "Profil",
+        call: "Appeler", video: "Vidéo", mute: "Muet", hangup: "Raccrocher", accept: "Accepter", decline: "Refuser" },
+  ar: { "nav.home": "الرئيسية", "nav.watch": "مشاهدة", "nav.jobs": "أعمالي", "nav.alerts": "التنبيهات", "nav.profile": "الملف",
+        call: "اتصال", video: "فيديو", mute: "كتم", hangup: "إنهاء", accept: "قبول", decline: "رفض" }
+};
+var LANG_KEY = "rehoboth-lang";
+function curLang() { try { return localStorage.getItem(LANG_KEY) || (profile && profile.language) || "en"; } catch (e) { return "en"; } }
+function applyLang() {
+  var code = I18N[curLang()] ? curLang() : "en", dict = I18N[code], fb = I18N.en;
+  document.documentElement.lang = code;
+  document.documentElement.dir = code === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach(function (el) {
+    var k = el.getAttribute("data-i18n"); el.textContent = dict[k] || fb[k] || el.textContent;
+  });
+  var pl = $("bPriceL"); if (pl) pl.textContent = "Price (" + curCode() + ")";
+}
+function setLang(code) {
+  try { localStorage.setItem(LANG_KEY, code); } catch (e) {}
+  applyLang();
+  if (me) sb.from("profiles").update({ language: code }).eq("id", me.id);
+}
+var CURRENCIES = ["USD", "GHS", "NGN", "KES", "ZAR", "XOF", "XAF", "EGP", "MAD", "EUR", "GBP", "CAD"];
+
+/* Voice and video calls. The two phones talk directly; the app only passes the setup messages between them.
+   Calls need a live service for phones on some networks, which is connected later. */
+var callPeer = null, pc = null, localStream = null, pendingIce = [], outCh = {}, inbox = null, incoming = null, callVideoOn = false;
+function sigChannel(uid) {
+  if (outCh[uid]) return outCh[uid];
+  var c = { ready: false, queue: [], ch: sb.channel("user-" + uid) };
+  c.ch.subscribe(function (st) {
+    if (st === "SUBSCRIBED") { c.ready = true; c.queue.splice(0).forEach(function (m) { c.ch.send({ type: "broadcast", event: "sig", payload: m }); }); }
+  });
+  outCh[uid] = c; return c;
+}
+function sendSig(uid, p) {
+  p.from = me.id; var c = sigChannel(uid);
+  if (c.ready) c.ch.send({ type: "broadcast", event: "sig", payload: p }); else c.queue.push(p);
+}
+function startInbox() {
+  if (inbox || !me || !sb.channel) return;
+  inbox = sb.channel("user-" + me.id).on("broadcast", { event: "sig" }, function (m) { handleSig(m.payload || {}); }).subscribe();
+}
+function makePC(uid) {
+  var conn = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+  conn.onicecandidate = function (e) { if (e.candidate) sendSig(uid, { kind: "ice", cand: e.candidate.toJSON() }); };
+  conn.ontrack = function (e) {
+    var v = $("remoteV"), a = $("remoteA"), s = e.streams[0];
+    if (callVideoOn) { v.srcObject = s; v.hidden = false; } else { a.srcObject = s; }
+  };
+  conn.onconnectionstatechange = function () {
+    if (conn.connectionState === "connected") $("callStatus").textContent = "Connected";
+    if (conn.connectionState === "failed") endCall("Could not connect. Your network may block calls.", true);
+  };
+  return conn;
+}
+async function getMedia(video) {
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: video });
+  if (video) { $("localV").srcObject = localStream; $("localV").hidden = false; }
+  return localStream;
+}
+function showCall(name, status) {
+  $("callName").textContent = name; $("callStatus").textContent = status; $("callBox").hidden = false;
+}
+async function startCall(uid, name, video) {
+  if (!sb.channel) return say($("chatMsg"), "Calls are not available right now.", "err");
+  if (pc || incoming) return say($("chatMsg"), "You are already on a call.", "err");
+  callPeer = uid; callVideoOn = video;
+  showCall(name, "Calling...");
+  try {
+    var s = await getMedia(video);
+    pc = makePC(uid);
+    s.getTracks().forEach(function (t) { pc.addTrack(t, s); });
+    var offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sendSig(uid, { kind: "invite", sdp: offer.sdp, video: video, name: (profile && profile.name) || "" });
+  } catch (err) {
+    endCall("Microphone or camera is blocked. Allow it for this site, then try again.", false);
+  }
+}
+async function acceptCall() {
+  var c = incoming; incoming = null; $("incoming").hidden = true;
+  if (!c) return;
+  callPeer = c.from; callVideoOn = !!c.video;
+  showCall(c.name || "Call", "Connecting...");
+  try {
+    var s = await getMedia(callVideoOn);
+    pc = makePC(c.from);
+    s.getTracks().forEach(function (t) { pc.addTrack(t, s); });
+    await pc.setRemoteDescription({ type: "offer", sdp: c.sdp });
+    var answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    sendSig(c.from, { kind: "answer", sdp: answer.sdp });
+    pendingIce.splice(0).forEach(function (x) { pc.addIceCandidate(x).catch(function () {}); });
+  } catch (err) {
+    endCall("Microphone or camera is blocked. Allow it for this site, then try again.", true);
+  }
+}
+function declineCall() {
+  var c = incoming; incoming = null; $("incoming").hidden = true;
+  if (c) sendSig(c.from, { kind: "decline" });
+}
+function endCall(msg, notify) {
+  if (notify && callPeer) sendSig(callPeer, { kind: "end" });
+  if (pc) { pc.close(); pc = null; }
+  if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
+  pendingIce = []; callPeer = null;
+  $("callBox").hidden = true; $("remoteV").hidden = true; $("localV").hidden = true;
+  $("remoteV").srcObject = null; $("remoteA").srcObject = null;
+  if (msg) say($("chatMsg"), msg, "err");
+}
+function handleSig(p) {
+  if (!p || p.from === me.id) return;
+  if (p.kind === "invite") {
+    if (pc || incoming) return sendSig(p.from, { kind: "decline" });
+    incoming = { from: p.from, sdp: p.sdp, video: p.video, name: p.name };
+    $("incName").textContent = p.name || "Someone";
+    $("incKind").textContent = p.video ? "Video call" : "Voice call";
+    $("incoming").hidden = false;
+    return;
+  }
+  if (p.kind === "decline" && callPeer === p.from) return endCall("Call declined.", false);
+  if (p.kind === "end" && callPeer === p.from) return endCall("Call ended.", false);
+  if (!pc || callPeer !== p.from) return;
+  if (p.kind === "answer") {
+    pc.setRemoteDescription({ type: "answer", sdp: p.sdp }).catch(function () {});
+  } else if (p.kind === "ice") {
+    if (pc.remoteDescription) pc.addIceCandidate(p.cand).catch(function () {}); else pendingIce.push(p.cand);
+  }
+}
+$("incAccept").onclick = acceptCall;
+$("incDecline").onclick = declineCall;
+$("callEnd").onclick = function () { endCall("", true); };
+$("callMute").onclick = function () {
+  if (!localStream) return;
+  var t = localStream.getAudioTracks()[0]; if (!t) return;
+  t.enabled = !t.enabled; this.textContent = t.enabled ? tr("mute") : "Unmute";
+};
+function tr(k) { var d = I18N[curLang()] || I18N.en; return d[k] || I18N.en[k] || k; }
+$("thCall").onclick = function () { if (chatWith) startCall(chatWith, $("thName").textContent, false); };
+$("thVid").onclick = function () { if (chatWith) startCall(chatWith, $("thName").textContent, true); };
+function agreeText(kind, amount) {
+  var a = Number(amount) > 0 ? Number(amount) : null, ex = "";
+  if (kind === "short") {
+    ex = a ? '<p style="margin:6px 0 0"><b>Example:</b> on ' + money(a) + ', the worker receives ' + money(a * 0.95) + ' and the platform takes ' + money(a * 0.05) + '.</p>' : "";
+    return { title: "Short-term work", who: "The worker pays this", text: "5% of the agreed amount, per deal. You pay nothing extra.", ex: ex };
+  }
+  if (kind === "longCompany") {
+    ex = a ? '<p style="margin:6px 0 0"><b>Example:</b> for a worker paid ' + money(a) + ' in one day, the platform takes ' + money(a * 0.009) + '.</p>' : "";
+    return { title: "Long-term company work", who: "Paid by the company, on top of the worker's pay", text: "0.90% of the worker's pay for each day worked. Charged once at month end, in the same payment as the worker's pay.", ex: ex };
+  }
+  if (kind === "longPersonal") {
+    ex = a ? '<p style="margin:6px 0 0"><b>Example:</b> on ' + money(a) + ' received, the platform takes ' + money(a * 0.05) + ', and the worker keeps ' + money(a * 0.95) + '.</p>' : "";
+    return { title: "Long-term personal work", who: "The worker pays this", text: "5% of the amount the worker receives.", ex: ex };
+  }
+  if (kind === "sale") {
+    ex = a ? '<p style="margin:6px 0 0"><b>Example:</b> on a sale of ' + money(a) + ', the seller receives ' + money(a * 0.95) + ' and the platform takes ' + money(a * 0.05) + '.</p>' : "";
+    return { title: "Selling an item", who: "The seller pays this", text: "5% of the sale price.", ex: ex };
+  }
+  if (kind === "driver") {
+    return { title: "Driver or transport", who: "The driver pays this", text: "5% of the driver's fee. Agree the driver's fee with the driver before you start. The fee itself is between you and the driver.", ex: "" };
+  }
+  return { title: "Running an ad", who: "The seller pays this", text: "$0.99 per ad, flat. No commission on the sale.", ex: "" };
+}
+/* Shows the agreement and calls done(true) only if the person agrees. */
+function askAgree(kind, amount, done) {
+  var t = agreeText(kind, amount);
+  $("agreeBody").innerHTML =
+    '<div class="kv" style="display:block"><b>' + esc(t.title) + '</b><p class="meta" style="margin:2px 0 0">' + esc(t.who) + '</p>' +
+    '<p style="margin:4px 0 0">' + esc(t.text) + '</p>' + t.ex + '</div>' +
+    '<p class="meta" style="margin:10px 0 12px">Read this before you agree. You can cancel now at no cost.</p>' +
+    '<div class="row2"><button id="agYes" class="btn" type="button">I agree</button><button id="agNo" class="btn ghost" type="button">Cancel</button></div>';
+  $("agree").hidden = false;
+  $("agYes").onclick = function () { $("agree").hidden = true; done(true); };
+  $("agNo").onclick = function () { $("agree").hidden = true; done(false); };
+}
+
+/* Welcome: three short screens the first time a person signs in on a device */
+var WELCOME_KEY = "rehoboth-welcome";
+var welcomeStep = 0;
+var WELCOME = [
+  { t: "Welcome to Rehoboth", b: "Find people who can do the work you need, or find work near you. Buy and sell items too." },
+  { t: "Watch real work", b: "Watch posts from workers and sellers. Follow the ones you like. Post your own work so people can see it." },
+  { t: "Every rule is shown first", b: "Before any deal starts, you see exactly what you pay and how much. Nothing is hidden." }
+];
+function showWelcome() {
+  var seen = false;
+  try { seen = localStorage.getItem(WELCOME_KEY) === "yes"; } catch (e) {}
+  if (seen || !me) return;
+  welcomeStep = 0;
+  paintWelcome();
+  $("welcome").hidden = false;
+}
+function paintWelcome() {
+  var s = WELCOME[welcomeStep], last = welcomeStep === WELCOME.length - 1;
+  $("welcomeBody").innerHTML = '<h2 style="margin:0 0 8px">' + esc(s.t) + '</h2><p style="margin:0 0 16px">' + esc(s.b) + '</p>' +
+    '<p class="meta" style="margin:0 0 12px">' + (welcomeStep + 1) + ' of ' + WELCOME.length + '</p>' +
+    '<button id="welNext" class="btn" type="button">' + (last ? "Start" : "Next") + '</button>' +
+    (last ? "" : ' <button id="welSkip" class="btn ghost" type="button">Skip</button>');
+  $("welNext").onclick = function () {
+    if (last) return closeWelcome();
+    welcomeStep++; paintWelcome();
+  };
+  if (!last) $("welSkip").onclick = closeWelcome;
+}
+function closeWelcome() {
+  try { localStorage.setItem(WELCOME_KEY, "yes"); } catch (e) {}
+  $("welcome").hidden = true;
+}
+
+$("logout").onclick = async function () { if (liveOn()) { navigator.geolocation.clearWatch(liveWatch); liveWatch = null; await savePresence(false, null); } await stopShare(); await sb.auth.signOut(); };
+
+setMode("up");
+</script>
+</body>
+</html>
