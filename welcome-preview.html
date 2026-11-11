@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rehoboth welcome preview</title>
+<style>
+:root{--bg:#050b1f;--card:#0d1a3a;--ink:#f3f6ff;--muted:#8ea0c8;--a:#1d6bff;--b:#22b4ff;--ok:#22c55e}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{display:flex;align-items:center;justify-content:center;padding:16px}
+.stage{position:relative;width:100%;max-width:380px;height:min(640px,calc(100vh - 32px));background:linear-gradient(160deg,#0b1a44,#050b1f);border:1px solid #1a2d62;border-radius:28px;overflow:hidden}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;opacity:0;animation:show 10.5s infinite}
+.scene:nth-child(1){animation-delay:0s}
+.scene:nth-child(2){animation-delay:3.5s}
+.scene:nth-child(3){animation-delay:7s}
+@keyframes show{0%{opacity:0;transform:scale(.96)}5%{opacity:1;transform:scale(1)}28%{opacity:1}33%{opacity:0;transform:scale(1.02)}100%{opacity:0}}
+.big{font-size:30px;font-weight:800;margin:18px 0 8px}
+.small{color:var(--muted);font-size:16px;line-height:1.5;max-width:300px}
+.mock{width:250px;background:var(--card);border:1px solid #1d3570;border-radius:18px;padding:14px;text-align:left}
+.row{display:flex;gap:10px;align-items:center}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));flex:0 0 auto}
+.box{flex:1;padding:10px 14px;border-radius:99px;border:1px solid #1d3570;color:var(--muted);font-size:14px}
+.pill{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b));font-weight:700;font-size:14px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px}
+.bar{height:10px;border-radius:99px;background:#1d3570;margin:8px 0}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b));width:0;animation:fill 3.5s ease-out}
+@keyframes fill{to{width:100%}}
+.tick{display:inline-block;width:34px;height:34px;border-radius:50%;background:var(--ok);color:#fff;font-size:20px;line-height:34px;font-weight:800}
+.dots{position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:center;gap:8px}
+.dots span{width:8px;height:8px;border-radius:50%;background:#1d3570}
+.brand{position:absolute;top:18px;left:22px;font-size:20px;font-weight:800;letter-spacing:-.3px}
+.cap{position:absolute;bottom:44px;left:0;right:0;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="brand">Rehoboth</div>
+
+  <section class="scene">
+    <div class="mock">
+      <div class="row"><div class="av"></div><div class="box">What's on your mind?</div></div>
+      <div style="height:90px;margin-top:12px;border-radius:12px;background:#132657"></div>
+    </div>
+    <div class="big">Post your work</div>
+    <div class="small">Show what you do, what you sell, or what you need. People see it in their feed.</div>
+  </section>
+
+  <section class="scene">
+    <div class="mock">
+      <div class="row"><div class="box" style="flex:1">Find a plumber in Accra</div></div>
+      <div style="margin-top:12px">
+        <div class="row" style="margin:8px 0"><span class="dot"></span><b>Kofi</b><span style="margin-left:auto;color:var(--muted);font-size:12px">Online</span></div>
+        <div class="row" style="margin:8px 0"><span class="dot" style="background:#ef4444"></span><b>Ama</b><span style="margin-left:auto;color:var(--muted);font-size:12px">30 min ago</span></div>
+      </div>
+    </div>
+    <div class="big">Find people</div>
+    <div class="small">Search for buyers, sellers and workers near you. Connect, then message or add them to a group.</div>
+  </section>
+
+  <section class="scene">
+    <div class="mock">
+      <div style="font-size:13px;color:var(--muted)">Deal complete</div>
+      <div class="bar"><i></i></div>
+      <div class="row" style="margin-top:14px"><span class="tick">&#10003;</span><div><b>Paid and confirmed</b><div style="color:var(--muted);font-size:12px">Leave a review</div></div></div>
+    </div>
+    <div class="big">24/7 opportunity available here</div>
+    <div class="small">Find work, sales and buyers any time, day or night.</div>
+  </section>
+
+  <div class="cap">Preview of the welcome screen.</div>
+</div>
+</body>
+</html>
