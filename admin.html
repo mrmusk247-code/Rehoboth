@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Rehoboth Owner</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--blue:#2563eb;--green:#10b981;--bad:#b91c1c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1020;--card:#141b30;--ink:#e8edf8;--muted:#9aa6c2;--line:#26314f;--blue:#60a5fa;--green:#34d399;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#141b30;--ink:#e8edf8;--muted:#9aa6c2;--line:#26314f;--blue:#60a5fa;--green:#34d399;--bad:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+h1{font-size:20px;margin:0}
+h2{font-size:16px;margin:0 0 10px}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;margin-bottom:8px}
+button{padding:9px 14px;border:0;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px}
+.stat b{display:block;font-size:24px;margin:2px 0}
+.stat span{color:var(--muted);font-size:13px;display:block}
+.bar{height:8px;background:var(--blue);border-radius:4px;margin:3px 0}
+.bar.alt{background:var(--green)}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.meta{color:var(--muted);font-size:13px}
+.msg{font-size:14px;margin:6px 0}
+.err{color:var(--bad)}
+.ok{color:var(--green)}
+.item{border-top:1px solid var(--line);padding:10px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div id="login" class="card hidden">
+    <h1 style="margin-bottom:12px">Rehoboth Owner</h1>
+    <p class="meta">Only owner accounts can open this page.</p>
+    <input id="lEmail" type="text" placeholder="Email or phone number" autocomplete="username">
+    <input id="lPw" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn" type="button">Sign in</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+
+  <div id="dash" class="hidden">
+    <div class="top">
+      <h1>Rehoboth Owner</h1>
+      <div style="display:flex;gap:8px">
+        <button id="refreshBtn" class="ghost" type="button">Refresh</button>
+        <button id="outBtn" class="ghost" type="button">Sign out</button>
+      </div>
+    </div>
+    <div id="dashMsg" class="msg"></div>
+
+    <div class="card">
+      <h2>Overview</h2>
+      <div id="stats" class="grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Last 14 days</h2>
+      <p class="meta" style="margin:0 0 6px"><span style="color:var(--blue)">&#9632;</span> sign-ups &nbsp; <span style="color:var(--green)">&#9632;</span> posts</p>
+      <div id="daily"></div>
+    </div>
+
+    <div class="card">
+      <h2>Hire requests by status</h2>
+      <div id="requests"></div>
+    </div>
+
+    <div class="card">
+      <h2>Feedback from people</h2>
+      <select id="fbFilter">
+        <option value="new">Waiting for a reply</option>
+        <option value="all">All feedback</option>
+      </select>
+      <div id="feedback"></div>
+    </div>
+
+    <div class="card">
+      <h2>Owner emails</h2>
+      <p class="meta">Anyone on this list can open this page. Add your new Gmail before you stop using the old one.</p>
+      <div id="owners"></div>
+      <input id="newOwner" type="email" placeholder="New owner email">
+      <button id="addOwnerBtn" type="button">Add owner</button>
+      <div id="ownerMsg" class="msg"></div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+var SUPABASE_URL = "https://fqxpbbuqmfrmdcctqoek.supabase.co";
+var SUPABASE_KEY = "sb_publishable_pNNTxuFPBUE_HzAwbNoL9A_rHeEvP3F";
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function say(el, t, k) { el.textContent = t || ""; el.className = "msg " + (k || ""); }
+function show(id, on) { $(id).classList.toggle("hidden", !on); }
+function errText(e) { return (e && e.message) ? e.message : "Something went wrong."; }
+
+/* Owner check: the database decides, using the signed-in email and the owner list */
+async function start() {
+  var s = await sb.auth.getSession();
+  if (!s.data.session) { show("dash", false); show("login", true); return; }
+  var o = await sb.rpc("is_owner");
+  if (o.error || o.data !== true) {
+    await sb.auth.signOut();
+    show("dash", false); show("login", true);
+    say($("loginMsg"), "This account is not an owner.", "err");
+    return;
+  }
+  show("login", false); show("dash", true);
+  loadAll();
+}
+
+$("loginBtn").onclick = async function () {
+  var who = $("lEmail").value.trim(), email = who;
+  if (!who || !$("lPw").value) return say($("loginMsg"), "Enter your email or phone number and password.", "err");
+  if (who.indexOf("@") < 0) {
+    var found = await sb.rpc("owner_login_email", { p: who });
+    if (found.error) return say($("loginMsg"), errText(found.error), "err");
+    if (!found.data) return say($("loginMsg"), "This number is not linked to an owner account.", "err");
+    email = found.data;
+  }
+  var r = await sb.auth.signInWithPassword({ email: email, password: $("lPw").value });
+  if (r.error) return say($("loginMsg"), errText(r.error), "err");
+  $("lPw").value = "";
+  start();
+};
+$("outBtn").onclick = async function () { await sb.auth.signOut(); start(); };
+$("refreshBtn").onclick = function () { loadAll(); };
+$("fbFilter").onchange = function () { loadFeedback(); };
+
+async function loadAll() {
+  say($("dashMsg"), "Loading...");
+  var st = await sb.rpc("owner_stats");
+  if (st.error) return say($("dashMsg"), errText(st.error), "err");
+  var d = st.data;
+  say($("dashMsg"), "");
+  $("stats").innerHTML = [
+    card("Sign-ups today", d.users.today, "this week " + d.users.week + " · all " + d.users.all),
+    card("Active now", d.users.active_now, "seen in the last 5 minutes"),
+    card("Posts today", d.posts.today, "this week " + d.posts.week + " · all " + d.posts.all),
+    card("Messages today", d.messages.today, "this week " + d.messages.week + " · all " + d.messages.all),
+    card("Sell listings", d.listings.sell, "wanted listings: " + d.listings.want),
+    card("Job offers", d.job_offers, "offers made on jobs"),
+    card("Chats and groups", d.chats, "all chats"),
+    card("New feedback", d.feedback_new, "waiting for a reply")
+  ].join("");
+  var rs = d.requests_by_status || {}, keys = Object.keys(rs);
+  $("requests").innerHTML = keys.length ? keys.map(function (k) {
+    return '<div class="row"><span>' + esc(k) + '</span><b>' + esc(rs[k]) + '</b></div>';
+  }).join("") : '<p class="meta">No hire requests yet.</p>';
+  var max = 1;
+  d.daily.forEach(function (x) { max = Math.max(max, x.signups, x.posts); });
+  $("daily").innerHTML = d.daily.map(function (x) {
+    return '<div class="item"><div class="meta">' + esc(x.day) + ' · sign-ups ' + x.signups + ' · posts ' + x.posts + '</div>' +
+      '<div class="bar" style="width:' + (100 * x.signups / max) + '%"></div>' +
+      '<div class="bar alt" style="width:' + (100 * x.posts / max) + '%"></div></div>';
+  }).join("");
+  loadOwners();
+  loadFeedback();
+}
+
+function card(t, n, sub) {
+  return '<div class="stat"><span>' + esc(t) + '</span><b>' + esc(n) + '</b><span>' + esc(sub) + '</span></div>';
+}
+
+async function loadFeedback() {
+  var box = $("feedback");
+  var q = sb.from("feedback").select("id, body, status, reply, created_at, profiles(name)").order("created_at", { ascending: false }).limit(200);
+  if ($("fbFilter").value === "new") q = q.eq("status", "new");
+  var r = await q;
+  if (r.error) return box.innerHTML = '<p class="meta">' + esc(errText(r.error)) + '</p>';
+  if (!r.data || !r.data.length) return box.innerHTML = '<p class="meta">Nothing here yet.</p>';
+  box.innerHTML = r.data.map(function (x) {
+    var who = (x.profiles && x.profiles.name) || "Someone";
+    return '<div class="item"><div class="meta">' + esc(who) + ' · ' + esc(new Date(x.created_at).toLocaleString()) + ' · ' + esc(x.status) + '</div>' +
+      '<p style="margin:6px 0">' + esc(x.body) + '</p>' +
+      '<textarea rows="2" placeholder="Write a reply" data-reply="' + esc(x.id) + '">' + esc(x.reply || "") + '</textarea>' +
+      '<button type="button" data-save="' + esc(x.id) + '">Save reply</button> <span class="msg" data-fmsg="' + esc(x.id) + '"></span></div>';
+  }).join("");
+  box.querySelectorAll("[data-save]").forEach(function (b) {
+    b.onclick = async function () {
+      var id = b.dataset.save, text = box.querySelector('[data-reply="' + id + '"]').value.trim(), out = box.querySelector('[data-fmsg="' + id + '"]');
+      if (!text) return say(out, "Write a reply first.", "err");
+      var u = await sb.from("feedback").update({ reply: text, status: "answered", replied_at: new Date().toISOString() }).eq("id", id);
+      if (u.error) return say(out, errText(u.error), "err");
+      say(out, "Saved. The person sees it in the app.", "ok");
+      loadFeedback();
+    };
+  });
+}
+
+async function loadOwners() {
+  var box = $("owners");
+  var r = await sb.rpc("owner_list");
+  if (r.error) return box.innerHTML = '<p class="meta">' + esc(errText(r.error)) + '</p>';
+  box.innerHTML = (r.data || []).map(function (email) {
+    return '<div class="row"><span>' + esc(email) + '</span><button class="ghost" type="button" data-rm="' + esc(email) + '">Remove</button></div>';
+  }).join("");
+  box.querySelectorAll("[data-rm]").forEach(function (b) {
+    b.onclick = async function () {
+      if (!confirm("Remove " + b.dataset.rm + " from owners?")) return;
+      var u = await sb.rpc("remove_owner", { e: b.dataset.rm });
+      if (u.error) return say($("ownerMsg"), errText(u.error), "err");
+      loadOwners();
+    };
+  });
+}
+
+$("addOwnerBtn").onclick = async function () {
+  var email = $("newOwner").value.trim();
+  if (!email) return say($("ownerMsg"), "Write the email first.", "err");
+  var u = await sb.rpc("add_owner", { e: email });
+  if (u.error) return say($("ownerMsg"), errText(u.error), "err");
+  $("newOwner").value = "";
+  say($("ownerMsg"), "Added. That email can now sign in here.", "ok");
+  loadOwners();
+};
+
+start();
+</script>
+</body>
+</html>
